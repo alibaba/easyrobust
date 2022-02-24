@@ -14,7 +14,7 @@ import torchvision
 from torchvision import transforms
 
 # timm func
-from timm.data import Mixup, IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD, one_hot
+from timm.data import Mixup, IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from timm.data.transforms_factory import create_transform
 from timm.models import create_model, model_parameters, resume_checkpoint, load_checkpoint, convert_splitbn_model
 from timm.loss import LabelSmoothingCrossEntropy, SoftTargetCrossEntropy
@@ -205,6 +205,10 @@ def get_args_parser():
 
     return parser
 
+def one_hot(x, num_classes, on_value=1., off_value=0., device='cuda'):
+    x = x.long().view(-1, 1)
+    return torch.full((x.size()[0], num_classes), off_value, device=device).scatter_(1, x, on_value)
+
 def setup_for_distributed(is_master):
     """
     This function disables printing when not in master process
@@ -336,7 +340,7 @@ def main(args, args_text):
     print('train transforms: ', train_transform)
     print('test transforms: ', test_transform)
 
-    dataset_train = torchvision.datasets.ImageFolder(os.path.join(args.data_dir, 'val'), transform=train_transform)
+    dataset_train = torchvision.datasets.ImageFolder(os.path.join(args.data_dir, 'train'), transform=train_transform)
     dataset_val = torchvision.datasets.ImageFolder(os.path.join(args.data_dir, 'val'), transform=test_transform)
 
     sampler_train = torch.utils.data.DistributedSampler(

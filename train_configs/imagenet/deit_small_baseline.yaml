@@ -1,6 +1,6 @@
 # user need to provide training data dirs & output dirs
-data_dir: '/mnt/mxf164419/Data/ILSVRC/Data/CLS-LOC'
-output_dir: '/aisecurity-group-ds/users/xiaofeng/test/easyrobust_test'
+data_dir: '/data/ILSVRC2012/ILSVRC/Data/CLS-LOC'
+output_dir: 'output'
 
 # basic parameters
 epochs: 300

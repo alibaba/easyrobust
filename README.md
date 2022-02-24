@@ -1,5 +1,7 @@
 # EasyRobust
 
+EasyRobust is a tool for training your robust models. Now it support adversarial / non-adversarial training of CNN / ViT models on ImageNet.
+
 ## Install
 
 ```
@@ -16,7 +18,7 @@ sh train.sh train_configs/imagenet/resnet50_baseline.yaml
 
 ## Testing
 
-see test_scripts
+see [test_scripts](https://github.com/alibaba/easyrobust/tree/main/test_scripts)
 
 ## Templates for Training
 
