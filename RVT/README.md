@@ -1,10 +1,10 @@
 # RVT: Towards Robust Vision Transformer
 
 
-### News: We add adversarial training result of RVT [here](https://github.com/vtddggg/Robust-Vision-Transformer#adversarially-trained-weights) !!
+### News: We add adversarial training result of RVT [here](https://github.com/alibaba/easyrobust/tree/main/RVT#adversarially-trained-weights) !!
 
 
-This repository contains PyTorch code for Robust Vision Transformers.
+This repository contains PyTorch code for Robust Vision Transformers in CVPR2022.
 
 ***Note: Since the model is trained on our private platform, this transferred code has not been tested and may have some bugs. If you meet any problems, feel free to open an issue!***
 
@@ -16,7 +16,8 @@ For details see our paper "Towards Robust Vision Transformer"
 
 First, clone the repository locally:
 ```
-git clone https://github.com/vtddggg/Robust-Vision-Transformer.git
+git clone https://github.com/alibaba/easyrobust.git
+cd easyrobust/RVT
 ```
 Install PyTorch 1.7.0+ and torchvision 0.8.1+ and [pytorch-image-models 0.3.2](https://github.com/rwightman/pytorch-image-models):
 
