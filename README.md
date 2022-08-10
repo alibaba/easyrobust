@@ -35,9 +35,9 @@ Then test runing on ImageNet Validation set:
 ```
 python robustness_validation.py --model=resnet50 --interpolation=3 --imagenet_val_path=/path/to/ILSVRC/Data/CLS-LOC/val
 ```
-The trained models will be downloaded automaticly. If you want to download the checkpoints manually, check the urls in [utils.py](https://github.com/alibaba/easyrobust/blob/main/utils.py).
+The trained models will be downloaded automaticly. If you want to download the checkpoints manually, check the urls in [utils.py](https://github.com/alibaba/easyrobust/blob/main/easyrobust/test_scripts/utils.py).
 
-The code supports [Stylized-ImageNet](https://github.com/rgeirhos/Stylized-ImageNet), [ImageNet-V2](https://github.com/modestyachts/ImageNetV2), [ImageNet-R](https://github.com/hendrycks/imagenet-r), [ImageNet-A](https://github.com/hendrycks/natural-adv-examples), [ImageNet-Sketch](https://github.com/HaohanWang/ImageNet-Sketch), [ObjectNet](https://objectnet.dev/), [ImageNet-C](https://github.com/hendrycks/robustness), [AutoAttack](https://github.com/fra31/auto-attack) evaluation. See [test_example.sh](https://github.com/alibaba/easyrobust/blob/main/test_example.sh) for details. 
+The code supports [Stylized-ImageNet](https://github.com/rgeirhos/Stylized-ImageNet), [ImageNet-V2](https://github.com/modestyachts/ImageNetV2), [ImageNet-R](https://github.com/hendrycks/imagenet-r), [ImageNet-A](https://github.com/hendrycks/natural-adv-examples), [ImageNet-Sketch](https://github.com/HaohanWang/ImageNet-Sketch), [ObjectNet](https://objectnet.dev/), [ImageNet-C](https://github.com/hendrycks/robustness), [AutoAttack](https://github.com/fra31/auto-attack) evaluation. See [test_example.sh](https://github.com/alibaba/easyrobust/blob/main/easyrobust/test_scripts/test_example.sh) for details. 
 
 ### Adversarially robust models
 18 Adversarially trained models are opened in `utils.py`. 
