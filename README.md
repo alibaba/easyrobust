@@ -68,8 +68,8 @@ We collect some non-adversarially robust models based on resnet50. To test these
 
 | Method   |  Architecture | Clean Accuracy | Common Corruption (mCE)↓  | Weights |
 |:-------:|:--------:|:--------:|:--------:|:--------:|
-| `SIN` |  resnet50 | 74.59 | 69.32 | [url](http://alisec-competition.oss-cn-shanghai.aliyuncs.com/xiaofeng/imagenet_pretrained_models/clean_models/SIN.pth) |
-| `DebiasedCNN` | resnet50 | 76.91 | 67.55 | [url](http://alisec-competition.oss-cn-shanghai.aliyuncs.com/xiaofeng/imagenet_pretrained_models/clean_models/res50-debiased.pth) |
-| `Augmix` |  resnet50 | 77.54 | 65.27 | [url](http://alisec-competition.oss-cn-shanghai.aliyuncs.com/xiaofeng/imagenet_pretrained_models/clean_models/augmix.pth) |
-| `ANT` |  resnet50 | 76.07 | 63.37 | [url](http://alisec-competition.oss-cn-shanghai.aliyuncs.com/xiaofeng/imagenet_pretrained_models/clean_models/ANT3x3_Model.pth) |
-| `DeepAugment` |  resnet50 | 76.66 | 60.37 | [url](http://alisec-competition.oss-cn-shanghai.aliyuncs.com/xiaofeng/imagenet_pretrained_models/clean_models/deepaugment.pth) |
+| [SIN](https://arxiv.org/abs/1811.12231) |  resnet50 | 74.59 | 69.32 | [url](http://alisec-competition.oss-cn-shanghai.aliyuncs.com/xiaofeng/imagenet_pretrained_models/clean_models/SIN.pth) |
+| [DebiasedCNN](https://arxiv.org/abs/2010.05981) | resnet50 | 76.91 | 67.55 | [url](http://alisec-competition.oss-cn-shanghai.aliyuncs.com/xiaofeng/imagenet_pretrained_models/clean_models/res50-debiased.pth) |
+| [Augmix](https://arxiv.org/abs/1912.02781) |  resnet50 | 77.54 | 65.27 | [url](http://alisec-competition.oss-cn-shanghai.aliyuncs.com/xiaofeng/imagenet_pretrained_models/clean_models/augmix.pth) |
+| [ANT](https://arxiv.org/abs/2001.06057) |  resnet50 | 76.07 | 63.37 | [url](http://alisec-competition.oss-cn-shanghai.aliyuncs.com/xiaofeng/imagenet_pretrained_models/clean_models/ANT3x3_Model.pth) |
+| [DeepAugment](https://arxiv.org/abs/2006.16241) |  resnet50 | 76.66 | 60.37 | [url](http://alisec-competition.oss-cn-shanghai.aliyuncs.com/xiaofeng/imagenet_pretrained_models/clean_models/deepaugment.pth) |
