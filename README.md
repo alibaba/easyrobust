@@ -21,7 +21,7 @@ An Easy-to-use Framework for Large-scale Robust Training
 
 EasyRobust also contains the robust models trained on ImageNet, and the scripts for robustness evaluation.
 
-The benchmarked results have been contained in ARES-Bench. 
+The benchmarked results have been contained in [ARES-Bench](https://ml.cs.tsinghua.edu.cn/ares-bench/#/leaderboard). 
 
 ### Usage
 
