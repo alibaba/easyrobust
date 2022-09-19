@@ -21,7 +21,7 @@ without extra data can get 31.40 mCE on ImageNet-C and 32.77% top-1 accuracy
 on Stylized-ImageNet, building the new state-of-the-art.
 
 ## Requirements
-Check [Installation](../../../README.md#installation) for preparing requirements.
+Check [Installation](../../../../README.md#installation) for preparing requirements.
 
 ## Training & Evaluation 
 
