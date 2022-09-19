@@ -5,7 +5,7 @@
 [![license](https://img.shields.io/github/license/alibaba/easyrobust.svg)](https://github.com/alibaba/easyrobust/blob/main/LICENSE)
 [![open issues](https://isitmaintained.com/badge/open/alibaba/easyrobust.svg)](https://github.com/alibaba/easyrobust/issues)
 [![GitHub pull-requests](https://img.shields.io/github/issues-pr/alibaba/easyrobust.svg)](https://GitHub.com/alibaba/easyrobust/pull/)
-[![GitHub latest commit](https://badgen.net/github/last-commit/alibaba/easyrobust)](https://GitHub.com/alibaba/easyrobust/commit/)
+[![GitHub latest release](https://badgen.net/github/release/alibaba/easyrobust)](https://GitHub.com/alibaba/easyrobust/releases/)
 </div>
 
 ## What's New
