@@ -1,5 +1,11 @@
 # Discrete Adversarial Training (NeurIPS'2022)
 
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/enhance-the-visual-representation-via/domain-generalization-on-imagenet-c)](https://paperswithcode.com/sota/domain-generalization-on-imagenet-c?p=enhance-the-visual-representation-via)
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/enhance-the-visual-representation-via/domain-generalization-on-stylized-imagenet)](https://paperswithcode.com/sota/domain-generalization-on-stylized-imagenet?p=enhance-the-visual-representation-via)
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/enhance-the-visual-representation-via/domain-generalization-on-imagenet-sketch)](https://paperswithcode.com/sota/domain-generalization-on-imagenet-sketch?p=enhance-the-visual-representation-via)
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/enhance-the-visual-representation-via/domain-generalization-on-imagenet-r)](https://paperswithcode.com/sota/domain-generalization-on-imagenet-r?p=enhance-the-visual-representation-via)
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/enhance-the-visual-representation-via/domain-generalization-on-imagenet-a)](https://paperswithcode.com/sota/domain-generalization-on-imagenet-a?p=enhance-the-visual-representation-via)
+
 ![DAT](framework.jpg)
 
 This is the official PyTorch implementation of "Enhance the Visual Representation via Discrete Adversarial Training", Xiaofeng Mao, Yuefeng Chen, Ranjie Duan, Shaokai Ye, Yao Zhu, Xiaodan Li, Gege Qi, Rong Zhang, Hui Xue.
