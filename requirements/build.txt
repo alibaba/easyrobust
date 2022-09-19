@@ -1,0 +1,7 @@
+# These must be installed before building easyrobust
+torch>=1.8.0
+torchvision>=0.9.0
+tqdm
+opt_einsum
+timm==0.4.12
+einops

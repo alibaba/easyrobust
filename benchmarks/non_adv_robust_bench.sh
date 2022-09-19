@@ -1,0 +1,6 @@
+python benchmarks/benchmark.py --model resnet50 --interpolation 2 --ckpt_path http://alisec-competition.oss-cn-shanghai.aliyuncs.com/xiaofeng/easy_robust/benchmark_models/ours/examples/augmix/model_best.pth.tar
+python benchmarks/benchmark.py --model resnet50 --interpolation 2 --ckpt_path http://alisec-competition.oss-cn-shanghai.aliyuncs.com/xiaofeng/easy_robust/benchmark_models/ours/examples/deepaugment/model_best.pth.tar
+python benchmarks/benchmark.py --model resnet50 --interpolation 2 --ckpt_path http://alisec-competition.oss-cn-shanghai.aliyuncs.com/xiaofeng/easy_robust/benchmark_models/ours/examples/sin/model_best.pth.tar
+python benchmarks/benchmark.py --model resnet50 --interpolation 2 --ckpt_path http://alisec-competition.oss-cn-shanghai.aliyuncs.com/xiaofeng/easy_robust/benchmark_models/ours/examples/advprop/model_best.pth.tar
+python benchmarks/benchmark.py --model drvit_small_patch16 --crop-pct 0.9 --mean 0.5 0.5 0.5 --std 0.5 0.5 0.5 --ckpt_path http://alisec-competition.oss-cn-shanghai.aliyuncs.com/xiaofeng/easy_robust/benchmark_models/ours/examples/drvit/model_best.pth.tar
+python benchmarks/benchmark.py --model rvt_small_plus --crop-pct 0.9 --mean 0.5 0.5 0.5 --std 0.5 0.5 0.5 --ckpt_path http://alisec-competition.oss-cn-shanghai.aliyuncs.com/xiaofeng/easy_robust/benchmark_models/ours/examples/rvt/model_best.pth.tar
