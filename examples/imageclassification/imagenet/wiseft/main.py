@@ -13,7 +13,6 @@ Hacked together by / Copyright 2020 Ross Wightman (https://github.com/rwightman)
 import argparse
 from random import shuffle
 import time
-from tkinter.ttk import Style
 import yaml
 import os
 import logging
@@ -23,8 +22,8 @@ from datetime import datetime
 
 import torch
 import torch.nn as nn
-from torchvision import transforms
 import torchvision.utils
+from torchvision import transforms
 from torch.nn.parallel import DistributedDataParallel as NativeDDP
 
 from timm.data import resolve_data_config, Mixup
@@ -39,7 +38,8 @@ from timm.data import create_transform
 from timm.data.distributed_sampler import OrderedDistributedSampler
 
 from easyrobust.datasets import ImageNetDataset
-from easyrobust.attacks import pgd_generator
+from easyrobust import models
+from easyrobust.benchmarks import *
 
 try:
     from apex import amp
@@ -299,53 +299,6 @@ parser.add_argument('--torchscript', dest='torchscript', action='store_true',
 parser.add_argument('--log-wandb', action='store_true', default=False,
                     help='log training and validation metrics to wandb')
 
-# args for adversarial training
-parser.add_argument('--attack_criterion', type=str, default='regular', choices=['regular', 'smooth', 'mixup'])
-parser.add_argument('--no_standard_aug', action='store_true', default=False)
-
-class Lighting(object):
-    """
-    Lighting noise (see https://git.io/fhBOc)
-    """
-    def __init__(self, alphastd, eigval, eigvec):
-        self.alphastd = alphastd
-        self.eigval = eigval
-        self.eigvec = eigvec
-
-    def __call__(self, img):
-        if self.alphastd == 0:
-            return img
-
-        alpha = img.new().resize_(3).normal_(0, self.alphastd)
-        rgb = self.eigvec.type_as(img).clone()\
-            .mul(alpha.view(1, 3).expand(3, 3))\
-            .mul(self.eigval.view(1, 3).expand(3, 3))\
-            .sum(1).squeeze()
-
-        return img.add(rgb.view(3, 1, 1).expand_as(img))
-
-def normalize_fn(tensor, mean, std):
-    """Differentiable version of torchvision.functional.normalize"""
-    # here we assume the color channel is in at dim=1
-    mean = mean[None, :, None, None]
-    std = std[None, :, None, None]
-    return tensor.sub(mean).div(std)
-
-class NormalizeByChannelMeanStd(nn.Module):
-    def __init__(self, mean, std):
-        super(NormalizeByChannelMeanStd, self).__init__()
-        if not isinstance(mean, torch.Tensor):
-            mean = torch.tensor(mean)
-        if not isinstance(std, torch.Tensor):
-            std = torch.tensor(std)
-        self.register_buffer("mean", mean)
-        self.register_buffer("std", std)
-
-    def forward(self, tensor):
-        return normalize_fn(tensor, self.mean, self.std)
-
-    def extra_repr(self):
-        return 'mean={}, std={}'.format(self.mean, self.std)
 
 def _parse_args():
     # Do we have a config file to parse?
@@ -432,8 +385,6 @@ def main():
         _logger.info(
             f'Model {safe_model_name(args.model)} created, param count:{sum([m.numel() for m in model.parameters()])}')
 
-    data_config = resolve_data_config(vars(args), model=model, verbose=args.local_rank == 0)
-
     # setup augmentation batch splits for contrastive loss or split bn
     num_aug_splits = 0
     if args.aug_splits > 0:
@@ -444,10 +395,6 @@ def main():
     if args.split_bn:
         assert num_aug_splits > 1 or args.resplit
         model = convert_splitbn_model(model, max(num_aug_splits, 2))
-
-    normalize = NormalizeByChannelMeanStd(
-            mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    model = nn.Sequential(normalize, model)
 
     # move model to GPU, enable channels last layout if set
     model.cuda()
@@ -509,33 +456,6 @@ def main():
         if args.resume:
             load_checkpoint(model_ema.module, args.resume, use_ema=True)
 
-    # setup distributed training
-    if args.distributed:
-        if has_apex and use_amp == 'apex':
-            # Apex DDP preferred unless native amp is activated
-            if args.local_rank == 0:
-                _logger.info("Using NVIDIA APEX DistributedDataParallel.")
-            model = ApexDDP(model, delay_allreduce=True)
-        else:
-            if args.local_rank == 0:
-                _logger.info("Using native Torch DistributedDataParallel.")
-            model = NativeDDP(model, device_ids=[args.local_rank], broadcast_buffers=not args.no_ddp_bb)
-        # NOTE: EMA model does not need to be wrapped by DDP
-
-    # setup learning rate schedule and starting epoch
-    lr_scheduler, num_epochs = create_scheduler(args, optimizer)
-    start_epoch = 0
-    if args.start_epoch is not None:
-        # a specified start_epoch will always override the resume epoch
-        start_epoch = args.start_epoch
-    elif resume_epoch is not None:
-        start_epoch = resume_epoch
-    if lr_scheduler is not None and start_epoch > 0:
-        lr_scheduler.step(start_epoch)
-
-    if args.local_rank == 0:
-        _logger.info('Scheduled epochs: {}'.format(num_epochs))
-
     # setup mixup / cutmix
     collate_fn = None
     mixup_fn = None
@@ -547,86 +467,11 @@ def main():
             label_smoothing=args.smoothing, num_classes=args.num_classes)
         mixup_fn = Mixup(**mixup_args)
 
-
-    # create data loaders w/ augmentation pipeiine
-    train_interpolation = args.train_interpolation
-    if args.no_aug or not train_interpolation:
-        train_interpolation = data_config['interpolation']
-
     train_transform = None
     val_transform = None
-    re_num_splits = 0
-    
-    if args.resplit:
-    # apply RE to second half of batch if no aug split otherwise line up with aug split
-        re_num_splits = num_aug_splits or 2
-    train_transform = create_transform(
-        input_size=data_config['input_size'],
-        is_training=True,
-        use_prefetcher=False,
-        no_aug=args.no_aug,
-        scale=args.scale,
-        ratio=args.ratio,
-        hflip=args.hflip,
-        vflip=args.vflip,
-        color_jitter=args.color_jitter,
-        auto_augment=args.aa,
-        interpolation=train_interpolation,
-        mean=data_config['mean'],
-        std=data_config['std'],
-        crop_pct=None,
-        tf_preprocessing=False,
-        re_prob=args.reprob,
-        re_mode=args.remode,
-        re_count=args.recount,
-        re_num_splits=re_num_splits,
-        separate=num_aug_splits > 0,
-    )
-    val_transform = create_transform(
-        input_size=data_config['input_size'],
-        is_training=False,
-        use_prefetcher=False,
-        no_aug=False,
-        scale=None,
-        ratio=False,
-        hflip=0.5,
-        vflip=0.,
-        color_jitter=0.4,
-        auto_augment=None,
-        interpolation=data_config['interpolation'],
-        mean=data_config['mean'],
-        std=data_config['std'],
-        crop_pct=data_config['crop_pct'],
-        tf_preprocessing=False,
-        re_prob=0.,
-        re_mode='const',
-        re_count=1,
-        re_num_splits=re_num_splits,
-        separate=num_aug_splits > 0,
-    )
 
-    if not args.no_standard_aug:
-        train_transform = transforms.Compose([
-            transforms.RandomResizedCrop(224),
-            transforms.RandomHorizontalFlip(),
-            transforms.ColorJitter(
-                brightness=0.1,
-                contrast=0.1,
-                saturation=0.1
-            ),
-            transforms.ToTensor(),
-            Lighting(0.05, torch.Tensor([0.2175, 0.0188, 0.0045]), 
-                        torch.Tensor([
-            [-0.5675,  0.7192,  0.4009],
-            [-0.5808, -0.0045, -0.8140],
-            [-0.5836, -0.6948,  0.4203],
-        ]))
-        ])
-        val_transform = transforms.Compose([
-                transforms.Resize(256),
-                transforms.CenterCrop(224),
-                transforms.ToTensor()
-            ])
+    train_transform = model.train_preprocess
+    val_transform = model.val_preprocess
 
     print(train_transform)
     print(val_transform)
@@ -663,6 +508,33 @@ def main():
         persistent_workers=True
     )
 
+    # setup distributed training
+    if args.distributed:
+        if has_apex and use_amp == 'apex':
+            # Apex DDP preferred unless native amp is activated
+            if args.local_rank == 0:
+                _logger.info("Using NVIDIA APEX DistributedDataParallel.")
+            model = ApexDDP(model, delay_allreduce=True)
+        else:
+            if args.local_rank == 0:
+                _logger.info("Using native Torch DistributedDataParallel.")
+            model = NativeDDP(model, device_ids=[args.local_rank], broadcast_buffers=not args.no_ddp_bb, find_unused_parameters=True)
+        # NOTE: EMA model does not need to be wrapped by DDP
+
+    # setup learning rate schedule and starting epoch
+    lr_scheduler, num_epochs = create_scheduler(args, optimizer)
+    start_epoch = 0
+    if args.start_epoch is not None:
+        # a specified start_epoch will always override the resume epoch
+        start_epoch = args.start_epoch
+    elif resume_epoch is not None:
+        start_epoch = resume_epoch
+    if lr_scheduler is not None and start_epoch > 0:
+        lr_scheduler.step(start_epoch)
+
+    if args.local_rank == 0:
+        _logger.info('Scheduled epochs: {}'.format(num_epochs))
+
     # setup loss function
     if args.jsd_loss:
         assert num_aug_splits > 1  # JSD only valid with aug splits set
@@ -695,17 +567,18 @@ def main():
         else:
             exp_name = '-'.join([
                 datetime.now().strftime("%Y%m%d-%H%M%S"),
-                safe_model_name(args.model),
-                str(data_config['input_size'][-1])
+                safe_model_name(args.model)
             ])
         output_dir = get_outdir(args.output if args.output else './output/train', exp_name)
-        decreasing = True if eval_metric == 'loss' else False
-        saver = CheckpointSaver(
-            model=model, optimizer=optimizer, args=args, model_ema=model_ema, amp_scaler=loss_scaler,
-            checkpoint_dir=output_dir, recovery_dir=output_dir, decreasing=decreasing, max_history=args.checkpoint_hist)
+
+        evaluate_imagenet_val(model, '/mnt/mxf164419/Data/ILSVRC/Data/CLS-LOC/val', test_batchsize=args.batch_size*2, test_transform=val_transform)
+        evaluate_imagenet_a(model, '/mnt/mxf164419/Data/imagenet-a', test_batchsize=args.batch_size*2, test_transform=val_transform)
+        evaluate_imagenet_r(model, '/mnt/mxf164419/Data/imagenet-r', test_batchsize=args.batch_size*2, test_transform=val_transform)
+        evaluate_imagenet_sketch(model, '/mnt/mxf164419/Data/imagenet-sketch/imagenet-sketch/sketch', test_batchsize=args.batch_size*2, test_transform=val_transform)
+        evaluate_imagenet_v2(model, '/mnt/mxf164419/Data/imagenetv2', test_batchsize=args.batch_size*2, test_transform=val_transform)
         with open(os.path.join(output_dir, 'args.yaml'), 'w') as f:
             f.write(args_text)
-
+        torch.save(model.module.state_dict(), os.path.join(output_dir, 'zero_shot.pt'))
     try:
         for epoch in range(start_epoch, num_epochs):
             if args.distributed and hasattr(loader_train.sampler, 'set_epoch'):
@@ -739,10 +612,15 @@ def main():
                     epoch, train_metrics, eval_metrics, os.path.join(output_dir, 'summary.csv'),
                     write_header=best_metric is None, log_wandb=args.log_wandb and has_wandb)
 
-            if saver is not None:
-                # save proper checkpoint with eval metric
-                save_metric = eval_metrics[eval_metric]
-                best_metric, best_epoch = saver.save_checkpoint(epoch, metric=save_metric)
+            if args.rank == 0:
+                evaluate_imagenet_val(model, '/mnt/mxf164419/Data/ILSVRC/Data/CLS-LOC/val', test_batchsize=args.batch_size*2, test_transform=val_transform)
+                evaluate_imagenet_a(model, '/mnt/mxf164419/Data/imagenet-a', test_batchsize=args.batch_size*2, test_transform=val_transform)
+                evaluate_imagenet_r(model, '/mnt/mxf164419/Data/imagenet-r', test_batchsize=args.batch_size*2, test_transform=val_transform)
+                evaluate_imagenet_sketch(model, '/mnt/mxf164419/Data/imagenet-sketch/imagenet-sketch/sketch', test_batchsize=args.batch_size*2, test_transform=val_transform)
+                evaluate_imagenet_v2(model, '/mnt/mxf164419/Data/imagenetv2', test_batchsize=args.batch_size*2, test_transform=val_transform)
+                with open(os.path.join(output_dir, 'args.yaml'), 'w') as f:
+                    f.write(args_text)
+                torch.save(model.module.state_dict(), os.path.join(output_dir, '{}.pt'.format(epoch)))
 
     except KeyboardInterrupt:
         pass
@@ -781,8 +659,7 @@ def train_one_epoch(
             input = input.contiguous(memory_format=torch.channels_last)
 
         with amp_autocast():
-            advinput = pgd_generator(input, target, model, attack_criterion=args.attack_criterion)
-            output = model(advinput.clone().detach())
+            output = model(input)
             loss = loss_fn(output, target)
 
         if not args.distributed:
@@ -842,10 +719,6 @@ def train_one_epoch(
                         padding=0,
                         normalize=True)
 
-        if saver is not None and args.recovery_interval and (
-                last_batch or (batch_idx + 1) % args.recovery_interval == 0):
-            saver.save_recovery(epoch, batch_idx=batch_idx)
-
         if lr_scheduler is not None:
             lr_scheduler.step_update(num_updates=num_updates, metric=losses_m.avg)
 
@@ -863,68 +736,58 @@ def validate(model, loader, loss_fn, args, amp_autocast=suppress, log_suffix='')
     losses_m = AverageMeter()
     top1_m = AverageMeter()
     top5_m = AverageMeter()
-    adv_top1 = AverageMeter()
 
     model.eval()
 
     end = time.time()
     last_idx = len(loader) - 1
+    with torch.no_grad():
+        for batch_idx, (input, target) in enumerate(loader):
+            last_batch = batch_idx == last_idx
+            input = input.cuda()
+            target = target.cuda()
+            if args.channels_last:
+                input = input.contiguous(memory_format=torch.channels_last)
 
-    for batch_idx, (input, target) in enumerate(loader):
-        last_batch = batch_idx == last_idx
-        input = input.cuda()
-        target = target.cuda()
-        if args.channels_last:
-            input = input.contiguous(memory_format=torch.channels_last)
+            with amp_autocast():
+                output = model(input)
+            if isinstance(output, (tuple, list)):
+                output = output[0]
 
-        with torch.no_grad():
-            output = model(input)
+            # augmentation reduction
+            reduce_factor = args.tta
+            if reduce_factor > 1:
+                output = output.unfold(0, reduce_factor, reduce_factor).mean(dim=2)
+                target = target[0:target.size(0):reduce_factor]
 
-        advinput = pgd_generator(input, target, model, attack_type='Linf', eps=4/255, attack_steps=3, attack_lr=4/255*2/3, random_start_prob=1.0, attack_criterion='regular', use_best=False)
-        with torch.no_grad():
-            output_adv = model(advinput.clone().detach())
+            loss = loss_fn(output, target)
+            acc1, acc5 = accuracy(output, target, topk=(1, 5))
 
-        if isinstance(output, (tuple, list)):
-            output = output[0]
+            if args.distributed:
+                reduced_loss = reduce_tensor(loss.data, args.world_size)
+                acc1 = reduce_tensor(acc1, args.world_size)
+                acc5 = reduce_tensor(acc5, args.world_size)
+            else:
+                reduced_loss = loss.data
 
-        # augmentation reduction
-        reduce_factor = args.tta
-        if reduce_factor > 1:
-            output = output.unfold(0, reduce_factor, reduce_factor).mean(dim=2)
-            target = target[0:target.size(0):reduce_factor]
+            torch.cuda.synchronize()
 
-        loss = loss_fn(output, target)
-        acc1, acc5 = accuracy(output, target, topk=(1, 5))
-        adv_acc1, _ = accuracy(output_adv, target, topk=(1, 5))
+            losses_m.update(reduced_loss.item(), input.size(0))
+            top1_m.update(acc1.item(), output.size(0))
+            top5_m.update(acc5.item(), output.size(0))
 
-        if args.distributed:
-            reduced_loss = reduce_tensor(loss.data, args.world_size)
-            acc1 = reduce_tensor(acc1, args.world_size)
-            acc5 = reduce_tensor(acc5, args.world_size)
-            adv_acc1 = reduce_tensor(adv_acc1, args.world_size)
-        else:
-            reduced_loss = loss.data
-
-        torch.cuda.synchronize()
-
-        losses_m.update(reduced_loss.item(), input.size(0))
-        top1_m.update(acc1.item(), output.size(0))
-        top5_m.update(acc5.item(), output.size(0))
-        adv_top1.update(adv_acc1.item(), output.size(0))
-
-        batch_time_m.update(time.time() - end)
-        end = time.time()
-        if args.local_rank == 0 and (last_batch or batch_idx % args.log_interval == 0):
-            log_name = 'Test' + log_suffix
-            _logger.info(
-                '{0}: [{1:>4d}/{2}]  '
-                'Time: {batch_time.val:.3f} ({batch_time.avg:.3f})  '
-                'Loss: {loss.val:>7.4f} ({loss.avg:>6.4f})  '
-                'Acc@1: {top1.val:>7.4f} ({top1.avg:>7.4f})  '
-                'Acc@5: {top5.val:>7.4f} ({top5.avg:>7.4f})  '
-                'AdvAcc@1 {adv_top1.val:>7.4f} ({adv_top1.avg:>7.4f})'.format(
-                    log_name, batch_idx, last_idx, batch_time=batch_time_m,
-                    loss=losses_m, top1=top1_m, top5=top5_m, adv_top1=adv_top1))
+            batch_time_m.update(time.time() - end)
+            end = time.time()
+            if args.local_rank == 0 and (last_batch or batch_idx % args.log_interval == 0):
+                log_name = 'Test' + log_suffix
+                _logger.info(
+                    '{0}: [{1:>4d}/{2}]  '
+                    'Time: {batch_time.val:.3f} ({batch_time.avg:.3f})  '
+                    'Loss: {loss.val:>7.4f} ({loss.avg:>6.4f})  '
+                    'Acc@1: {top1.val:>7.4f} ({top1.avg:>7.4f})  '
+                    'Acc@5: {top5.val:>7.4f} ({top5.avg:>7.4f})'.format(
+                        log_name, batch_idx, last_idx, batch_time=batch_time_m,
+                        loss=losses_m, top1=top1_m, top5=top5_m))
 
     metrics = OrderedDict([('loss', losses_m.avg), ('top1', top1_m.avg), ('top5', top5_m.avg)])
 

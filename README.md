@@ -9,10 +9,13 @@
 </div>
 
 ## What's New
+- **[Sep 2022]**: [Towards Understanding and Boosting Adversarial Transferability from a Distribution Perspective]() was accepted into TIP 2022! Codes will be avaliable at [examples/attacks/dra](examples/attacks/dra)
 
-- **[Sep 2022]**: [Discrete Adversairal Training](https://arxiv.org/abs/2209.07735) was accepted into NeurIPS 2022! Codes avaliable at [examples/imageclassification/imagenet/dat](examples/imageclassification/imagenet/dat/README.md)
+- **[Sep 2022]**: [Boosting Out-of-distribution Detection with Typical Features]() was accepted into NeurIPS 2022! Codes avaliable at [examples/ood_detection/BATS](examples/ood_detection/BATS)
 
-- **[Sep 2022]**: [Robust Vision Transformer](https://arxiv.org/abs/2105.07926) achieves better performance than paper report using our implementation in [examples/imageclassification/imagenet/rvt](examples/imageclassification/imagenet/rvt/README.md)
+- **[Sep 2022]**: [Discrete Adversairal Training](https://arxiv.org/abs/2209.07735) was accepted into NeurIPS 2022! Codes avaliable at [examples/imageclassification/imagenet/dat](examples/imageclassification/imagenet/dat)
+
+- **[Sep 2022]**: [Robust Vision Transformer](https://arxiv.org/abs/2105.07926) achieves better performance than paper report using our implementation in [examples/imageclassification/imagenet/rvt](examples/imageclassification/imagenet/rvt)
 
 - **[Sep 2022]**: Updating 13 reproducing examples of robust training methods under [examples/imageclassification/imagenet](examples/imageclassification/imagenet).
 
@@ -31,7 +34,7 @@ EasyRobust is an **Easy**-to-use library for state-of-the-art **Robust** Compute
 
 - **Model Zoo**: Open source more than 30 pretrained adversarially or non-adversarially robust models. 
 
-- **Analytical tools**: Support analysis and visualization about a pretrained robust model, including [Attention Visualization of CNNs/ViTs](./tools/README.md), [Convolution Kernel Visualization](./tools/README.md), [Shape vs. Texture Biases Analysis](./tools/README.md), etc. Using these tools can help us to explain how robust training improves the interpretability of the model. 
+- **Analytical tools**: Support analysis and visualization about a pretrained robust model, including [Attention Visualization of CNNs/ViTs](./tools), [Convolution Kernel Visualization](./tools), [Shape vs. Texture Biases Analysis](./tools), etc. Using these tools can help us to explain how robust training improves the interpretability of the model. 
 
 ## Installation
 ### Install by PIP
@@ -122,16 +125,17 @@ Top1 Accuracy on the AutoAttack: 0.0%
 
 ### 2. How to use EasyRobust to train my own robust models?
 We implement most robust training methods in the folder `examples/imageclassification/imagenet/`. All of them are based on a basic training script: [examples/imageclassification/imagenet/base_training_script.py](./examples/imageclassification/imagenet/base_training_script.py). By comparing the difference, you can clearly see where and which hyperparameters of basic training are modified to create a robust training example. Below we present the tutorials of some classic methods:
-- [Adversarial Training on ImageNet using 8 GPUs](./examples/imageclassification/imagenet/adversarial_training/README.md)
-- [AugMix Training on ImageNet with 180 Epochs](./examples/imageclassification/imagenet/augmix/README.md)
-- [AdvProp for Improving Non-adversarial Robustness and Accuracy](./examples/imageclassification/imagenet/advprop/README.md)
-- [Using Stylized ImageNet as Extended Data for Training](./examples/imageclassification/imagenet/SIN/README.md)
-- [Discrete Adversarial Training for ViTs](./examples/imageclassification/imagenet/dat/README.md)
-- [Training Robust Vision Transformers (RVT) with 300 Epochs](./examples/imageclassification/imagenet/rvt/README.md)
+- [Adversarial Training on ImageNet using 8 GPUs](./examples/imageclassification/imagenet/adversarial_training)
+- [AugMix Training on ImageNet with 180 Epochs](./examples/imageclassification/imagenet/augmix)
+- [AdvProp for Improving Non-adversarial Robustness and Accuracy](./examples/imageclassification/imagenet/advprop)
+- [Using Stylized ImageNet as Extended Data for Training](./examples/imageclassification/imagenet/SIN)
+- [Discrete Adversarial Training for ViTs](./examples/imageclassification/imagenet/dat)
+- [Training Robust Vision Transformers (RVT) with 300 Epochs](./examples/imageclassification/imagenet/rvt)
+- [Robust Finetuning of CLIP Models](./examples/imageclassification/imagenet/wiseft)
 
 ## Analytical Tools
 
-see [tools/README.md](./tools/README.md)
+see [tools/README.md](./tools)
 
 ## Model Zoo and Baselines
 
