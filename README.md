@@ -9,19 +9,26 @@
 </div>
 
 ## What's New
-- **[Sep 2022]**: [Towards Understanding and Boosting Adversarial Transferability from a Distribution Perspective]() was accepted into TIP 2022! Codes will be avaliable at [examples/attacks/dra](examples/attacks/dra)
 
-- **[Sep 2022]**: [Boosting Out-of-distribution Detection with Typical Features]() was accepted into NeurIPS 2022! Codes avaliable at [examples/ood_detection/BATS](examples/ood_detection/BATS)
+- **[Oct 2022]**: [Towards Understanding and Boosting Adversarial Transferability from a Distribution Perspective](https://arxiv.org/abs/2210.04213) was accepted into TIP 2022! Codes will be avaliable at [examples/attacks/dra](examples/attacks/dra)
 
-- **[Sep 2022]**: [Discrete Adversairal Training](https://arxiv.org/abs/2209.07735) was accepted into NeurIPS 2022! Codes avaliable at [examples/imageclassification/imagenet/dat](examples/imageclassification/imagenet/dat)
+- **[Sep 2022]**: [Boosting Out-of-distribution Detection with Typical Features](https://arxiv.org/abs/2210.04200) was accepted into NeurIPS 2022! Codes avaliable at [examples/ood_detection/BATS](examples/ood_detection/BATS)
 
-- **[Sep 2022]**: [Robust Vision Transformer](https://arxiv.org/abs/2105.07926) achieves better performance than paper report using our implementation in [examples/imageclassification/imagenet/rvt](examples/imageclassification/imagenet/rvt)
+- **[Sep 2022]**: [Enhance the Visual Representation via Discrete Adversarial Training](https://arxiv.org/abs/2209.07735) was accepted into NeurIPS 2022! Codes avaliable at [examples/imageclassification/imagenet/dat](examples/imageclassification/imagenet/dat)
 
 - **[Sep 2022]**: Updating 13 reproducing examples of robust training methods under [examples/imageclassification/imagenet](examples/imageclassification/imagenet).
 
 - **[Sep 2022]**: Releasing 16 Adversarial Training models, including a Swin-B which achieves SOTA adversairal robustness with 47.42% on AutoAttack!
 
 - **[Sep 2022]**: EasyRobust v0.2.0 released.
+
+## Our Research Project
+
+- **[TIP 2022]** Towards Understanding and Boosting Adversarial Transferability from a Distribution Perspective [[Paper](https://arxiv.org/abs/2210.04213), [Code](examples/attacks/dra)]
+- **[NeurIPS 2022]** Boosting Out-of-distribution Detection with Typical Features [[Paper](https://arxiv.org/abs/2210.04200), [Code](examples/ood_detection/BATS)]
+- **[NeurIPS 2022]** Enhance the Visual Representation via Discrete Adversarial Training [[Paper](https://arxiv.org/abs/2209.07735), [Code](examples/imageclassification/imagenet/dat)]
+- **[CVPR 2022]** Towards Robust Vision Transformer [[Paper](https://arxiv.org/abs/2105.07926), [Code](examples/imageclassification/imagenet/rvt)]
+
 
 ## Introduction
 EasyRobust is an **Easy**-to-use library for state-of-the-art **Robust** Computer Vision Research with [PyTorch](https://pytorch.org). EasyRobust aims to accelerate research cycle in robust vision, by collecting comprehensive robust training techniques and benchmarking them with various robustness metrics. The key features includes:

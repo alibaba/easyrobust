@@ -1,41 +1,15 @@
-# @misc{jacobgilpytorchcam,
-#   title={PyTorch library for CAM methods},
-#   author={Jacob Gildenblat and contributors},
-#   year={2021},
-#   publisher={GitHub},
-#   howpublished={\url{https://github.com/jacobgil/pytorch-grad-cam}},
-# }
-
 import argparse
-import PIL
 from PIL import Image
 import requests
 import io
 import numpy as np
-
+import matplotlib.pyplot as plt
 import torch
 from torch.utils import model_zoo
 from torchvision import transforms
 from timm.models import create_model
 
-from pytorch_grad_cam import GradCAM, \
-    HiResCAM, \
-    ScoreCAM, \
-    GradCAMPlusPlus, \
-    AblationCAM, \
-    XGradCAM, \
-    EigenCAM, \
-    EigenGradCAM, \
-    LayerCAM, \
-    FullGrad, \
-    GradCAMElementWise
-    
-
-from pytorch_grad_cam import GuidedBackpropReLUModel
-from pytorch_grad_cam.utils.image import show_cam_on_image, \
-    deprocess_image, \
-    preprocess_image
-from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
+np.random.seed(1)
 
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Inference')
 parser.add_argument('--model', '-m', metavar='MODEL', default='resnet50',
@@ -43,7 +17,6 @@ parser.add_argument('--model', '-m', metavar='MODEL', default='resnet50',
 parser.add_argument('--ckpt_path', default='', type=str, required=True,
                     help='model architecture (default: dpn92)')
 parser.add_argument('--input_image', default='', type=str, help='url or path')
-parser.add_argument('--target_class', default=None, type=int)
 
 parser.add_argument('--mean', type=float, nargs='+', default=[0.485, 0.456, 0.406], metavar='MEAN',
                     help='Override mean pixel value of dataset')
@@ -59,11 +32,10 @@ parser.add_argument('--num-classes', type=int, default=1000,
                     help='Number classes in dataset')
 parser.add_argument('--use_ema', dest='use_ema', action='store_true',
                     help='use use_ema model state_dict')
-parser.add_argument('--method', type=str, default='gradcam',
-                        choices=['gradcam', 'hirescam', 'gradcam++',
-                                 'scorecam', 'xgradcam',
-                                 'ablationcam', 'eigencam',
-                                 'eigengradcam', 'layercam', 'fullgrad'])
+parser.add_argument('--max-eps', default=6, type=float,
+                metavar='N', help='attack epsilon')
+parser.add_argument('--eps-step', default=0.3, type=float,
+                metavar='N', help='attack step')
                     
 args = parser.parse_args()
 
@@ -71,6 +43,41 @@ def download_image(url):
     resp = requests.get(url)
     resp.raise_for_status()
     return Image.open(io.BytesIO(resp.content))
+
+def get_decision_boundary(model, xi, max_eps=6, eps_step=0.3, num_classes=1000):
+    lab2color = np.random.uniform(0,1,size=(num_classes,3))
+    xi.requires_grad = True
+    pred = model(xi)
+
+    _, out = torch.max(pred, dim=1)
+    print('pred: {}'.format(out.item()))
+    xi.grad = None
+    pred[0][out.item()].backward()
+    g1 = xi.grad.data.detach()
+    g1 = g1 / g1.norm()
+
+    g2 = torch.randn(*g1.shape).cuda()
+    g2 = g2 / g2.norm()
+    g2 = g2 - torch.dot(g1.view(-1),g2.view(-1)) * g1
+    g2 = g2 / g2.norm()
+    assert torch.dot(g1.view(-1),g2.view(-1)) < 1e-6
+    
+    x_epss = y_epss = np.arange(-max_eps, max_eps, eps_step)
+    to_plt = []
+    with torch.no_grad():
+        for j, x_eps in enumerate(x_epss):
+            x_inp = xi + x_eps * g1 + torch.FloatTensor(y_epss.reshape(-1, 1, 1, 1)).cuda() * g2
+            pred = model(x_inp)
+            pred_c = torch.max(pred, dim=1)[1].cpu().detach().numpy()
+            to_plt.append(lab2color[pred_c])
+
+    to_plt = np.array(to_plt)
+
+    plt.imshow(to_plt)
+    plt.plot((len(x_epss)-1)/2,(len(y_epss)-1)/2,'ro')
+    plt.axvline((len(x_epss)-1)/2, ymin=0.5, color='k', ls='--')
+    plt.axis('off')
+    plt.savefig('images/vis_decision_bound.jpg', bbox_inches='tight', pad_inches=-0.1)
 
 def main(args):
     if args.input_image == '':
@@ -101,64 +108,24 @@ def main(args):
         del state_dict['std']
             
     model.load_state_dict(state_dict)
-
     model.eval()
     model.cuda()
-
-    target_layers = [model.layer4]
-
-    preprocess2tensor = transforms.Compose([
+    
+    if args.input_image.startswith('http'):
+        im = download_image(args.input_image).convert('RGB')
+    else:
+        im = Image.open(args.input_image).convert('RGB')
+    
+    transform = transforms.Compose([
         transforms.Resize(int(args.input_size/args.crop_pct), interpolation=args.interpolation),
         transforms.CenterCrop(args.input_size),
         transforms.ToTensor(),
         transforms.Normalize(mean=args.mean, std=args.std)
     ])
-    preprocess = transforms.Compose([
-        transforms.Resize(int(args.input_size/args.crop_pct), interpolation=args.interpolation),
-        transforms.CenterCrop(args.input_size)
-    ])
 
-    methods = { "gradcam": GradCAM,
-                "hirescam":HiResCAM,
-                "scorecam": ScoreCAM,
-                "gradcam++": GradCAMPlusPlus,
-                "ablationcam": AblationCAM,
-                "xgradcam": XGradCAM,
-                "eigencam": EigenCAM,
-                "eigengradcam": EigenGradCAM,
-                "layercam": LayerCAM,
-                "fullgrad": FullGrad,
-                "gradcamelementwise": GradCAMElementWise}
-
-    targets = args.target_class
-
-    cam_algorithm = methods[args.method]
-    with cam_algorithm(model=model,
-                       target_layers=target_layers,
-                       use_cuda=True) as cam:
-
-
-        cam.batch_size = 1
-
-        if args.input_image.startswith('http'):
-            raw_image = download_image(args.input_image).convert('RGB')
-        else:
-            raw_image = Image.open(args.input_image).convert('RGB')
-
-        input_tensor = preprocess2tensor(raw_image).unsqueeze(0)
-        np_img = np.array(preprocess(raw_image))/255.
-
-        grayscale_cam = cam(input_tensor=input_tensor,
-                            targets=targets,
-                            aug_smooth=True,
-                            eigen_smooth=True)
-
-        # Here grayscale_cam has only one image in the batch
-        grayscale_cam = grayscale_cam[0, :]
-
-        cam_image = show_cam_on_image(np_img, grayscale_cam, use_rgb=True)
-        Image.fromarray(cam_image).save('images/cnn_attn.jpg')
-
+    xi = transform(im).unsqueeze(0).cuda()
     
+    get_decision_boundary(model, xi, num_classes=args.num_classes, max_eps=args.max_eps, eps_step=args.eps_step)
+
 if __name__ == "__main__":
     main(args)

@@ -119,7 +119,7 @@ def show_attention_map(model, args):
 
     result, _, _ = get_mask(im,torch.cat(attn_weights_list))
 
-    Image.fromarray(result).save('vit_attn.png')
+    Image.fromarray(result).save('images/vit_attn.jpg')
 
 def main(args):
     if args.input_image == '':
@@ -150,6 +150,7 @@ def main(args):
         del state_dict['std']
             
     model.load_state_dict(state_dict)
+    model.eval()
     show_attention_map(model, args)
         
 

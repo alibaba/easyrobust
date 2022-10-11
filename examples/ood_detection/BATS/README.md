@@ -1,5 +1,5 @@
 # Boosting OOD detection with typical features
-This is the official PyTorch implementation of "Boosting Out-of-distribution Detection with Typical Features" 
+This is the official PyTorch implementation of [Boosting Out-of-distribution Detection with Typical Features](https://arxiv.org/abs/2210.04200)
 
 >**Abstract:** Out-of-distribution (OOD) detection is a critical task for ensuring the reliability and safety of deep neural networks in real-world scenarios.
 Different from most previous OOD detection methods that focus on designing OOD scores or introducing diverse outlier examples to retrain the model, we delve into the obstacle factors in OOD detection from the perspective of typicality and regard the feature's high-probability region of the deep model as the feature's typical set.
