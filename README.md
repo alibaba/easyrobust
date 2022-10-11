@@ -16,6 +16,8 @@
 
 - **[Sep 2022]**: [Enhance the Visual Representation via Discrete Adversarial Training](https://arxiv.org/abs/2209.07735) was accepted into NeurIPS 2022! Codes avaliable at [examples/imageclassification/imagenet/dat](examples/imageclassification/imagenet/dat)
 
+- **[Sep 2022]**: Updating 5 methods for analysing your robust models under [tools/](tools).
+
 - **[Sep 2022]**: Updating 13 reproducing examples of robust training methods under [examples/imageclassification/imagenet](examples/imageclassification/imagenet).
 
 - **[Sep 2022]**: Releasing 16 Adversarial Training models, including a Swin-B which achieves SOTA adversairal robustness with 47.42% on AutoAttack!
@@ -41,7 +43,7 @@ EasyRobust is an **Easy**-to-use library for state-of-the-art **Robust** Compute
 
 - **Model Zoo**: Open source more than 30 pretrained adversarially or non-adversarially robust models. 
 
-- **Analytical tools**: Support analysis and visualization about a pretrained robust model, including [Attention Visualization of CNNs/ViTs](./tools), [Convolution Kernel Visualization](./tools), [Shape vs. Texture Biases Analysis](./tools), etc. Using these tools can help us to explain how robust training improves the interpretability of the model. 
+- **Analytical tools**: Support analysis and visualization about a pretrained robust model, including [Attention Visualization](./tools), [Decision Boundary Visualization](./tools), [Convolution Kernel Visualization](./tools), [Shape vs. Texture Biases Analysis](./tools), etc. Using these tools can help us to explain how robust training improves the interpretability of the model. 
 
 ## Installation
 ### Install by PIP
