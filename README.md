@@ -165,8 +165,6 @@ If you are willing to submit the model to our benchmarks, you can prepare a pyth
 ```markdown
 ## Submit Json Information
 
----
-
 {"date": "19/06/2017", 
  "extra_data": "no", 
  "model": "<b>Adversarial Training</b>", 
@@ -182,8 +180,6 @@ If you are willing to submit the model to our benchmarks, you can prepare a pyth
  "oodrob_imgcls_leaderboard": false, 
  "advrob_objdet_leaderboard": false, 
  "oodrob_objdet_leaderboard": false}
-
----
 ```
 We will check the result and present your result into the benchmark if there is no problem. For submission template of other benchmarks, check [submit-model.md](.github/ISSUE_TEMPLATE/submit-model.md).
 

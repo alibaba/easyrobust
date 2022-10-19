@@ -9,13 +9,7 @@ assignees: ''
 
 ## Submit Json Information
 
----
-[//]: <> (paste your submit json here)
-
 {}
-
-[//]: <> (paste your submit json here)
----
 
 ## Example Submit Json format is below:
 
