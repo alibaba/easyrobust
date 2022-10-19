@@ -160,7 +160,32 @@ OPTIONS:
     --data_dir [PATH of the bencmark datasets]
     --ckpt_path [URL or PATH of the model weights]
 ```
-If you are willing to submit the model to our benchmarks, you can prepare a python script similar to `benchmarks/benchmark.py` and `xxx.pth` saving weights, zip all files and send to us. We will check the result and present your result into the benchmark if there is no problem. 
+If you are willing to submit the model to our benchmarks, you can prepare a python script similar to `benchmarks/benchmark.py` and weights file `xxx.pth`, zip all the files. Then open an issue with the "Submit Model" template and provide a json storing submit information. Below is a submission template in adversarial robustness benchmark of image classification:
+
+```markdown
+## Submit Json Information
+
+---
+
+{"date": "19/06/2017", 
+ "extra_data": "no", 
+ "model": "<b>Adversarial Training</b>", 
+ "institution": "MIT", 
+ "paper_link": "https://arxiv.org/abs/1706.06083", 
+ "code_link": "", 
+ "architecture": "swin-b", 
+ "training framework": "easyrobust (v1)", 
+ "ImageNet-val": 75.05, 
+ "autoattack": 47.42, 
+ "files": "<a href=http://alisec-competition.oss-cn-shanghai.aliyuncs.com/xiaofeng/imagenet_pretrained_models/advtrain_models/advtrain_swin_base_patch4_window7_224_ep4.pth >download</a>", 
+ "advrob_imgcls_leaderboard": true, 
+ "oodrob_imgcls_leaderboard": false, 
+ "advrob_objdet_leaderboard": false, 
+ "oodrob_objdet_leaderboard": false}
+
+---
+```
+We will check the result and present your result into the benchmark if there is no problem. For submission template of other benchmarks, check [submit-model.md](.github/ISSUE_TEMPLATE/submit-model.md).
 
 Below is the model zoo and benchmark of the EasyRobust. All the results are runned by [benchmarks/adv_robust_bench.sh](./benchmarks/adv_robust_bench.sh) and [benchmarks/non_adv_robust_bench.sh](./benchmarks/non_adv_robust_bench.sh).
 
