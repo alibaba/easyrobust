@@ -33,6 +33,7 @@
 
 
 ## Introduction
+
 EasyRobust is an **Easy**-to-use library for state-of-the-art **Robust** Computer Vision Research with [PyTorch](https://pytorch.org). EasyRobust aims to accelerate research cycle in robust vision, by collecting comprehensive robust training techniques and benchmarking them with various robustness metrics. The key features includes:
 
 - **Reproducible implementation of SOTA in Robust Image Classification**: Most existing SOTA in Robust Image Classification are implemented - [Adversarial Training](https://arxiv.org/abs/1706.06083), [AdvProp](https://arxiv.org/abs/1911.09665), [SIN](https://arxiv.org/abs/1811.12231), [AugMix](https://arxiv.org/abs/1912.02781), [DeepAugment](https://arxiv.org/abs/2006.16241), [DrViT](https://arxiv.org/abs/2111.10493), [RVT](https://arxiv.org/abs/2105.07926), [FAN](https://arxiv.org/abs/2204.12451), [APR](https://arxiv.org/abs/2108.08487), [HAT](https://arxiv.org/abs/2204.00993), [PRIME](https://arxiv.org/abs/2112.13547), [DAT](https://arxiv.org/abs/2209.07735) and so on.
@@ -44,6 +45,11 @@ EasyRobust is an **Easy**-to-use library for state-of-the-art **Robust** Compute
 - **Model Zoo**: Open source more than 30 pretrained adversarially or non-adversarially robust models. 
 
 - **Analytical tools**: Support analysis and visualization about a pretrained robust model, including [Attention Visualization](./tools), [Decision Boundary Visualization](./tools), [Convolution Kernel Visualization](./tools), [Shape vs. Texture Biases Analysis](./tools), etc. Using these tools can help us to explain how robust training improves the interpretability of the model. 
+
+## Technical Articles
+We have a series of technical articles on the functionalities of EasyRobust.
+ - [顶刊TIP 2022！阿里提出：从分布视角出发理解和提升对抗样本的迁移性](https://mp.weixin.qq.com/s/qtTXn3B4OYiBaZgHZo9cGA)
+ - [无惧对抗和扰动、增强泛化，阿里安全打造更鲁棒的ViT模型，论文入选CVPR 2022](https://mp.weixin.qq.com/s/J6gqA09MxLwmN_C40Sjf1Q)
 
 ## Installation
 ### Install by PIP
