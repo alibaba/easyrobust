@@ -77,6 +77,8 @@ parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
 # Dataset / Model parameters
 parser.add_argument('--data_dir', metavar='DIR', default='',
                     help='path to dataset')
+parser.add_argument('--test_data', metavar='DIR', default='benchmarks/data',
+                    help='path to dataset')
 parser.add_argument('--train-split', metavar='NAME', default='train',
                     help='dataset train split (default: train)')
 parser.add_argument('--val-split', metavar='NAME', default='validation',
@@ -316,6 +318,12 @@ def _parse_args():
     args_text = yaml.safe_dump(args.__dict__, default_flow_style=False)
     return args, args_text
 
+def _merge(alpha, theta_0, theta_1):
+    # interpolate between all weights in the checkpoints
+    return {
+        'module.'+key: (1 - alpha) * theta_0[key] + alpha * theta_1[key]
+        for key in theta_0.keys()
+    }
 
 def main():
     setup_default_logging()
@@ -561,6 +569,14 @@ def main():
     best_epoch = None
     saver = None
     output_dir = None
+
+    evaluate_imagenet_val(model, os.path.join(args.test_data, 'imagenet-val'), test_batchsize=args.batch_size*2, test_transform=val_transform, dist=True)
+    evaluate_imagenet_a(model, os.path.join(args.test_data, 'imagenet-a'), test_batchsize=args.batch_size*2, test_transform=val_transform, dist=True)
+    evaluate_imagenet_r(model, os.path.join(args.test_data, 'imagenet-r'), test_batchsize=args.batch_size*2, test_transform=val_transform, dist=True)
+    evaluate_imagenet_sketch(model, os.path.join(args.test_data, 'imagenet-sketch'), test_batchsize=args.batch_size*2, test_transform=val_transform, dist=True)
+    evaluate_imagenet_v2(model, os.path.join(args.test_data, 'imagenetv2'), test_batchsize=args.batch_size*2, test_transform=val_transform, dist=True)
+    evaluate_objectnet(model, os.path.join(args.test_data, 'ObjectNet/images'), test_batchsize=args.batch_size*2, test_transform=val_transform, dist=True)
+
     if args.rank == 0:
         if args.experiment:
             exp_name = args.experiment
@@ -570,15 +586,10 @@ def main():
                 safe_model_name(args.model)
             ])
         output_dir = get_outdir(args.output if args.output else './output/train', exp_name)
-
-        evaluate_imagenet_val(model, '/mnt/mxf164419/Data/ILSVRC/Data/CLS-LOC/val', test_batchsize=args.batch_size*2, test_transform=val_transform)
-        evaluate_imagenet_a(model, '/mnt/mxf164419/Data/imagenet-a', test_batchsize=args.batch_size*2, test_transform=val_transform)
-        evaluate_imagenet_r(model, '/mnt/mxf164419/Data/imagenet-r', test_batchsize=args.batch_size*2, test_transform=val_transform)
-        evaluate_imagenet_sketch(model, '/mnt/mxf164419/Data/imagenet-sketch/imagenet-sketch/sketch', test_batchsize=args.batch_size*2, test_transform=val_transform)
-        evaluate_imagenet_v2(model, '/mnt/mxf164419/Data/imagenetv2', test_batchsize=args.batch_size*2, test_transform=val_transform)
         with open(os.path.join(output_dir, 'args.yaml'), 'w') as f:
             f.write(args_text)
         torch.save(model.module.state_dict(), os.path.join(output_dir, 'zero_shot.pt'))
+
     try:
         for epoch in range(start_epoch, num_epochs):
             if args.distributed and hasattr(loader_train.sampler, 'set_epoch'):
@@ -612,20 +623,43 @@ def main():
                     epoch, train_metrics, eval_metrics, os.path.join(output_dir, 'summary.csv'),
                     write_header=best_metric is None, log_wandb=args.log_wandb and has_wandb)
 
+            evaluate_imagenet_val(model, os.path.join(args.test_data, 'imagenet-val'), test_batchsize=args.batch_size*2, test_transform=val_transform, dist=True)
+            evaluate_imagenet_a(model, os.path.join(args.test_data, 'imagenet-a'), test_batchsize=args.batch_size*2, test_transform=val_transform, dist=True)
+            evaluate_imagenet_r(model, os.path.join(args.test_data, 'imagenet-r'), test_batchsize=args.batch_size*2, test_transform=val_transform, dist=True)
+            evaluate_imagenet_sketch(model, os.path.join(args.test_data, 'imagenet-sketch'), test_batchsize=args.batch_size*2, test_transform=val_transform, dist=True)
+            evaluate_imagenet_v2(model, os.path.join(args.test_data, 'imagenetv2'), test_batchsize=args.batch_size*2, test_transform=val_transform, dist=True)
+            evaluate_objectnet(model, os.path.join(args.test_data, 'ObjectNet/images'), test_batchsize=args.batch_size*2, test_transform=val_transform, dist=True)
+
             if args.rank == 0:
-                evaluate_imagenet_val(model, '/mnt/mxf164419/Data/ILSVRC/Data/CLS-LOC/val', test_batchsize=args.batch_size*2, test_transform=val_transform)
-                evaluate_imagenet_a(model, '/mnt/mxf164419/Data/imagenet-a', test_batchsize=args.batch_size*2, test_transform=val_transform)
-                evaluate_imagenet_r(model, '/mnt/mxf164419/Data/imagenet-r', test_batchsize=args.batch_size*2, test_transform=val_transform)
-                evaluate_imagenet_sketch(model, '/mnt/mxf164419/Data/imagenet-sketch/imagenet-sketch/sketch', test_batchsize=args.batch_size*2, test_transform=val_transform)
-                evaluate_imagenet_v2(model, '/mnt/mxf164419/Data/imagenetv2', test_batchsize=args.batch_size*2, test_transform=val_transform)
                 with open(os.path.join(output_dir, 'args.yaml'), 'w') as f:
                     f.write(args_text)
                 torch.save(model.module.state_dict(), os.path.join(output_dir, '{}.pt'.format(epoch)))
 
+        # interpolation
+        if args.rank == 0:
+            theta_0 = torch.load(os.path.join(output_dir, 'zero_shot.pt'))
+            theta_1 = torch.load(os.path.join(output_dir, '9.pt'))
+            model.eval()
+            for alpha in [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]:
+
+                theta = _merge(alpha, theta_0, theta_1)
+
+                # update the model (in-place) acccording to the new weights
+                model.load_state_dict(theta)
+
+                evaluate_imagenet_val(model, os.path.join(args.test_data, 'imagenet-val'), test_batchsize=args.batch_size*2, test_transform=val_transform)
+                evaluate_imagenet_a(model, os.path.join(args.test_data, 'imagenet-a'), test_batchsize=args.batch_size*2, test_transform=val_transform)
+                evaluate_imagenet_r(model, os.path.join(args.test_data, 'imagenet-r'), test_batchsize=args.batch_size*2, test_transform=val_transform)
+                evaluate_imagenet_sketch(model, os.path.join(args.test_data, 'imagenet-sketch'), test_batchsize=args.batch_size*2, test_transform=val_transform)
+                evaluate_imagenet_v2(model, os.path.join(args.test_data, 'imagenetv2'), test_batchsize=args.batch_size*2, test_transform=val_transform)
+                evaluate_objectnet(model, os.path.join(args.test_data, 'ObjectNet/images'), test_batchsize=args.batch_size*2, test_transform=val_transform)
+
+
     except KeyboardInterrupt:
         pass
-    if best_metric is not None:
-        _logger.info('*** Best metric: {0} (epoch {1})'.format(best_metric, best_epoch))
+    
+
+
 
 
 def train_one_epoch(

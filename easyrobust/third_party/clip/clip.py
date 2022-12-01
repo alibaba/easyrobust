@@ -21,6 +21,8 @@ from PIL import Image
 import gzip
 import html
 from functools import lru_cache
+from pkg_resources import packaging
+
 
 import numpy as np
 import torch
@@ -30,6 +32,14 @@ from torchvision.transforms import Compose, Resize, CenterCrop, ToTensor, Normal
 
 import ftfy
 import regex as re
+try:
+    from torchvision.transforms import InterpolationMode
+    BICUBIC = InterpolationMode.BICUBIC
+except ImportError:
+    BICUBIC = Image.BICUBIC
+
+if packaging.version.parse(torch.__version__) < packaging.version.parse("1.7.1"):
+    warnings.warn("PyTorch version 1.7.1 or higher is recommended")
 
 __all__ = ["available_models", "load", "tokenize"]
 
@@ -38,8 +48,11 @@ _MODELS = {
     "RN101": "https://openaipublic.azureedge.net/clip/models/8fa8567bab74a42d41c5915025a8e4538c3bdbe8804a470a72f30b0d94fab599/RN101.pt",
     "RN50x4": "https://openaipublic.azureedge.net/clip/models/7e526bd135e493cef0776de27d5f42653e6b4c8bf9e0f653bb11773263205fdd/RN50x4.pt",
     "RN50x16": "https://openaipublic.azureedge.net/clip/models/52378b407f34354e150460fe41077663dd5b39c54cd0bfd2b27167a4a06ec9aa/RN50x16.pt",
+    "RN50x64": "https://openaipublic.azureedge.net/clip/models/be1cfb55d75a9666199fb2206c106743da0f6468c9d327f3e0d0a543a9919d9c/RN50x64.pt",
     "ViT-B/32": "https://openaipublic.azureedge.net/clip/models/40d365715913c9da98579312b702a82c18be219cc2a73407c4526f58eba950af/ViT-B-32.pt",
     "ViT-B/16": "https://openaipublic.azureedge.net/clip/models/5806e77cd80f8b59890b7e101eabd078d9fb84e6937f9e85e4ecb61988df416f/ViT-B-16.pt",
+    "ViT-L/14": "https://openaipublic.azureedge.net/clip/models/b8cca3fd41ae0c99ba7e8951adf17d267cdb84cd88be6f7c2e0eca1737a03836/ViT-L-14.pt",
+    "ViT-L/14@336px": "https://openaipublic.azureedge.net/clip/models/3035c92b350959924f9f00213499208652fc7ea050643e8b385c2dac08641f02/ViT-L-14-336px.pt",
 }
 
 class Bottleneck(nn.Module):
@@ -51,16 +64,18 @@ class Bottleneck(nn.Module):
         # all conv layers have stride 1. an avgpool is performed after the second convolution when stride > 1
         self.conv1 = nn.Conv2d(inplanes, planes, 1, bias=False)
         self.bn1 = nn.BatchNorm2d(planes)
+        self.relu1 = nn.ReLU(inplace=True)
 
         self.conv2 = nn.Conv2d(planes, planes, 3, padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(planes)
+        self.relu2 = nn.ReLU(inplace=True)
 
         self.avgpool = nn.AvgPool2d(stride) if stride > 1 else nn.Identity()
 
         self.conv3 = nn.Conv2d(planes, planes * self.expansion, 1, bias=False)
         self.bn3 = nn.BatchNorm2d(planes * self.expansion)
+        self.relu3 = nn.ReLU(inplace=True)
 
-        self.relu = nn.ReLU(inplace=True)
         self.downsample = None
         self.stride = stride
 
@@ -75,8 +90,8 @@ class Bottleneck(nn.Module):
     def forward(self, x: torch.Tensor):
         identity = x
 
-        out = self.relu(self.bn1(self.conv1(x)))
-        out = self.relu(self.bn2(self.conv2(out)))
+        out = self.relu1(self.bn1(self.conv1(x)))
+        out = self.relu2(self.bn2(self.conv2(out)))
         out = self.avgpool(out)
         out = self.bn3(self.conv3(out))
 
@@ -84,7 +99,7 @@ class Bottleneck(nn.Module):
             identity = self.downsample(x)
 
         out += identity
-        out = self.relu(out)
+        out = self.relu3(out)
         return out
 
 
@@ -99,11 +114,11 @@ class AttentionPool2d(nn.Module):
         self.num_heads = num_heads
 
     def forward(self, x):
-        x = x.reshape(x.shape[0], x.shape[1], x.shape[2] * x.shape[3]).permute(2, 0, 1)  # NCHW -> (HW)NC
+        x = x.flatten(start_dim=2).permute(2, 0, 1)  # NCHW -> (HW)NC
         x = torch.cat([x.mean(dim=0, keepdim=True), x], dim=0)  # (HW+1)NC
         x = x + self.positional_embedding[:, None, :].to(x.dtype)  # (HW+1)NC
         x, _ = F.multi_head_attention_forward(
-            query=x, key=x, value=x,
+            query=x[:1], key=x, value=x,
             embed_dim_to_check=x.shape[-1],
             num_heads=self.num_heads,
             q_proj_weight=self.q_proj.weight,
@@ -121,8 +136,7 @@ class AttentionPool2d(nn.Module):
             training=self.training,
             need_weights=False
         )
-
-        return x[0]
+        return x.squeeze(0)
 
 
 class ModifiedResNet(nn.Module):
@@ -141,12 +155,14 @@ class ModifiedResNet(nn.Module):
         # the 3-layer stem
         self.conv1 = nn.Conv2d(3, width // 2, kernel_size=3, stride=2, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(width // 2)
+        self.relu1 = nn.ReLU(inplace=True)
         self.conv2 = nn.Conv2d(width // 2, width // 2, kernel_size=3, padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(width // 2)
+        self.relu2 = nn.ReLU(inplace=True)
         self.conv3 = nn.Conv2d(width // 2, width, kernel_size=3, padding=1, bias=False)
         self.bn3 = nn.BatchNorm2d(width)
+        self.relu3 = nn.ReLU(inplace=True)
         self.avgpool = nn.AvgPool2d(2)
-        self.relu = nn.ReLU(inplace=True)
 
         # residual layers
         self._inplanes = width  # this is a *mutable* variable used during construction
@@ -169,8 +185,9 @@ class ModifiedResNet(nn.Module):
 
     def forward(self, x):
         def stem(x):
-            for conv, bn in [(self.conv1, self.bn1), (self.conv2, self.bn2), (self.conv3, self.bn3)]:
-                x = self.relu(bn(conv(x)))
+            x = self.relu1(self.bn1(self.conv1(x)))
+            x = self.relu2(self.bn2(self.conv2(x)))
+            x = self.relu3(self.bn3(self.conv3(x)))
             x = self.avgpool(x)
             return x
 
@@ -535,20 +552,12 @@ class SimpleTokenizer(object):
         vocab = vocab + [v+'</w>' for v in vocab]
         for merge in merges:
             vocab.append(''.join(merge))
-        if not special_tokens:
-            special_tokens = ['<start_of_text>', '<end_of_text>']
-        else:
-            special_tokens = ['<start_of_text>', '<end_of_text>'] + special_tokens
-        vocab.extend(special_tokens)
+        vocab.extend(['<|startoftext|>', '<|endoftext|>'])
         self.encoder = dict(zip(vocab, range(len(vocab))))
         self.decoder = {v: k for k, v in self.encoder.items()}
         self.bpe_ranks = dict(zip(merges, range(len(merges))))
-        self.cache = {t:t for t in special_tokens}
-        special = "|".join(special_tokens)
-        self.pat = re.compile(special + r"""|'s|'t|'re|'ve|'m|'ll|'d|[\p{L}]+|[\p{N}]|[^\s\p{L}\p{N}]+""", re.IGNORECASE)
-
-        self.vocab_size = len(self.encoder)
-        self.all_special_ids = [self.encoder[t] for t in special_tokens]
+        self.cache = {'<|startoftext|>': '<|startoftext|>', '<|endoftext|>': '<|endoftext|>'}
+        self.pat = re.compile(r"""<\|startoftext\|>|<\|endoftext\|>|'s|'t|'re|'ve|'m|'ll|'d|[\p{L}]+|[\p{N}]|[^\s\p{L}\p{N}]+""", re.IGNORECASE)
 
     def bpe(self, token):
         if token in self.cache:
@@ -623,7 +632,7 @@ def _download(url: str, root: str = os.path.expanduser("~/.cache/clip")):
             warnings.warn(f"{download_target} exists, but the SHA256 checksum does not match; re-downloading the file")
 
     with urllib.request.urlopen(url) as source, open(download_target, "wb") as output:
-        with tqdm(total=int(source.info().get("Content-Length")), ncols=80, unit='iB', unit_scale=True) as loop:
+        with tqdm(total=int(source.info().get("Content-Length")), ncols=80, unit='iB', unit_scale=True, unit_divisor=1024) as loop:
             while True:
                 buffer = source.read(8192)
                 if not buffer:
@@ -644,14 +653,14 @@ def _transform(n_px: int, is_train: bool):
     normalize = Normalize((0.48145466, 0.4578275, 0.40821073), (0.26862954, 0.26130258, 0.27577711))
     if is_train:
         return Compose([
-            RandomResizedCrop(n_px, scale=(0.9, 1.0), interpolation=Image.BICUBIC),
+            RandomResizedCrop(n_px, scale=(0.9, 1.0), interpolation=BICUBIC),
             _convert_to_rgb,
             ToTensor(),
             normalize,
         ])
     else:
         return Compose([
-            Resize(n_px, interpolation=Image.BICUBIC),
+            Resize(n_px, interpolation=BICUBIC),
             CenterCrop(n_px),
             _convert_to_rgb,
             ToTensor(),
@@ -659,13 +668,12 @@ def _transform(n_px: int, is_train: bool):
         ])
 
 
-
 def available_models() -> List[str]:
     """Returns the names of available CLIP models"""
     return list(_MODELS.keys())
 
 
-def load(name: str, device: Union[str, torch.device] = "cuda" if torch.cuda.is_available() else "cpu", jit=True, is_train=False, pretrained=True):
+def load(name: str, device: Union[str, torch.device] = "cuda" if torch.cuda.is_available() else "cpu", jit: bool = False, download_root: str = None):
     """Load a CLIP model
     Parameters
     ----------
@@ -674,7 +682,9 @@ def load(name: str, device: Union[str, torch.device] = "cuda" if torch.cuda.is_a
     device : Union[str, torch.device]
         The device to put the loaded model
     jit : bool
-        Whether to load the optimized JIT model (default) or more hackable non-JIT model.
+        Whether to load the optimized JIT model or more hackable non-JIT model (default).
+    download_root: str
+        path to download the model files; by default, it uses "~/.cache/clip"
     Returns
     -------
     model : torch.nn.Module
@@ -683,30 +693,26 @@ def load(name: str, device: Union[str, torch.device] = "cuda" if torch.cuda.is_a
         A torchvision transform that converts a PIL image into a tensor that the returned model can take as its input
     """
     if name in _MODELS:
-        model_path = _download(_MODELS[name])
+        model_path = _download(_MODELS[name], download_root or os.path.expanduser("~/.cache/clip"))
     elif os.path.isfile(name):
         model_path = name
     else:
         raise RuntimeError(f"Model {name} not found; available models = {available_models()}")
 
-    try:
-        # loading JIT archive
-        model = torch.jit.load(model_path, map_location=device if jit else "cpu").eval()
-        state_dict = None
-    except RuntimeError:
-        # loading saved state dict
-        if jit:
-            warnings.warn(f"File {model_path} is not a JIT archive. Loading as a state dict instead")
-            jit = False
-        state_dict = torch.load(model_path, map_location="cpu")
+    with open(model_path, 'rb') as opened_file:
+        try:
+            # loading JIT archive
+            model = torch.jit.load(opened_file, map_location=device if jit else "cpu").eval()
+            state_dict = None
+        except RuntimeError:
+            # loading saved state dict
+            if jit:
+                warnings.warn(f"File {model_path} is not a JIT archive. Loading as a state dict instead")
+                jit = False
+            state_dict = torch.load(opened_file, map_location="cpu")
 
     if not jit:
-        try:
-            model = build_model(state_dict or model.state_dict()).to(device)
-        except KeyError:
-            sd = {k[7:]: v for k,v in state_dict["state_dict"].items()}
-            model = build_model(sd).to(device)
-
+        model = build_model(state_dict or model.state_dict()).to(device)
         if str(device) == "cpu":
             model.float()
         return model, \
@@ -718,7 +724,11 @@ def load(name: str, device: Union[str, torch.device] = "cuda" if torch.cuda.is_a
     device_node = [n for n in device_holder.graph.findAllNodes("prim::Constant") if "Device" in repr(n)][-1]
 
     def patch_device(module):
-        graphs = [module.graph] if hasattr(module, "graph") else []
+        try:
+            graphs = [module.graph] if hasattr(module, "graph") else []
+        except RuntimeError:
+            graphs = []
+
         if hasattr(module, "forward1"):
             graphs.append(module.forward1.graph)
 
@@ -738,7 +748,11 @@ def load(name: str, device: Union[str, torch.device] = "cuda" if torch.cuda.is_a
         float_node = float_input.node()
 
         def patch_float(module):
-            graphs = [module.graph] if hasattr(module, "graph") else []
+            try:
+                graphs = [module.graph] if hasattr(module, "graph") else []
+            except RuntimeError:
+                graphs = []
+
             if hasattr(module, "forward1"):
                 graphs.append(module.forward1.graph)
 
@@ -760,7 +774,7 @@ def load(name: str, device: Union[str, torch.device] = "cuda" if torch.cuda.is_a
            _transform(model.input_resolution.item(), is_train=False)
 
 
-def tokenize(texts: Union[str, List[str]], context_length: int = 77) -> torch.LongTensor:
+def tokenize(texts: Union[str, List[str]], context_length: int = 77, truncate: bool = False) -> Union[torch.IntTensor, torch.LongTensor]:
     """
     Returns the tokenized representation of given input string(s)
     Parameters
@@ -769,21 +783,31 @@ def tokenize(texts: Union[str, List[str]], context_length: int = 77) -> torch.Lo
         An input string or a list of input strings to tokenize
     context_length : int
         The context length to use; all CLIP models use 77 as the context length
+    truncate: bool
+        Whether to truncate the text in case its encoding is longer than the context length
     Returns
     -------
-    A two-dimensional tensor containing the resulting tokens, shape = [number of input strings, context_length]
+    A two-dimensional tensor containing the resulting tokens, shape = [number of input strings, context_length].
+    We return LongTensor when torch version is <1.8.0, since older index_select requires indices to be long.
     """
     if isinstance(texts, str):
         texts = [texts]
 
-    sot_token = _tokenizer.encoder["<start_of_text>"]
-    eot_token = _tokenizer.encoder["<end_of_text>"]
+    sot_token = _tokenizer.encoder["<|startoftext|>"]
+    eot_token = _tokenizer.encoder["<|endoftext|>"]
     all_tokens = [[sot_token] + _tokenizer.encode(text) + [eot_token] for text in texts]
-    result = torch.zeros(len(all_tokens), context_length, dtype=torch.long)
+    if packaging.version.parse(torch.__version__) < packaging.version.parse("1.8.0"):
+        result = torch.zeros(len(all_tokens), context_length, dtype=torch.long)
+    else:
+        result = torch.zeros(len(all_tokens), context_length, dtype=torch.int)
 
     for i, tokens in enumerate(all_tokens):
-        if len(tokens) > context_length: # Truncate
-            tokens = tokens[:context_length]
+        if len(tokens) > context_length:
+            if truncate:
+                tokens = tokens[:context_length]
+                tokens[-1] = eot_token
+            else:
+                raise RuntimeError(f"Input {texts[i]} is too long for context length {context_length}")
         result[i, :len(tokens)] = torch.tensor(tokens)
 
     return result

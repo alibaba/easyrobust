@@ -3,7 +3,7 @@ import torch
 from tqdm import tqdm
 
 from torchvision import transforms, datasets
-from timm.utils import AverageMeter, accuracy
+from timm.utils import AverageMeter, reduce_tensor, accuracy
 
 def get_mce_from_accuracy(accuracy, error_alexnet):
     """Computes mean Corruption Error from accuracy"""
@@ -51,10 +51,13 @@ data_loaders_names = {
         'Zoom Blur': 'zoom_blur'
     }
 
-def evaluate_imagenet_c(model, data_dir, test_batchsize=128, test_transform=None):
+def evaluate_imagenet_c(model, data_dir, test_batchsize=128, test_transform=None, dist=False):
     if not os.path.exists(data_dir):
         print('{} is not exist. skip')
         return
+
+    if dist:
+        assert torch.distributed.is_available() and torch.distributed.is_initialized()
     
     device = next(model.parameters()).device
     result_dict = {}
@@ -71,8 +74,11 @@ def evaluate_imagenet_c(model, data_dir, test_batchsize=128, test_transform=None
         print('run {}...'.format(name))
         for severity in range(1, 6):
             inc_dataset = datasets.ImageFolder(os.path.join(data_dir, subdir, str(severity)), transform=inc_transform)
+            sampler = None
+            if dist:
+                sampler = torch.utils.data.DistributedSampler(inc_dataset, shuffle=False)
             inc_data_loader = torch.utils.data.DataLoader(
-                            inc_dataset, sampler=None,
+                            inc_dataset, sampler=sampler,
                             batch_size=test_batchsize,
                             num_workers=4,
                             pin_memory=True,
@@ -87,6 +93,9 @@ def evaluate_imagenet_c(model, data_dir, test_batchsize=128, test_transform=None
                 with torch.no_grad():
                     output = model(input)
                 acc1, _ = accuracy(output, target, topk=(1, 5))
+                if dist:
+                    acc1 = reduce_tensor(acc1, torch.distributed.get_world_size())
+                    torch.cuda.synchronize()
                 top1_m.update(acc1.item(), output.size(0))
 
             # print(f"Accuracy on the {name+'({})'.format(severity)}: {top1_m.avg:.1f}%")
@@ -110,3 +119,4 @@ def evaluate_imagenet_c(model, data_dir, test_batchsize=128, test_transform=None
     overall_acc /= counter
     mCE /= counter
     print("Top1 accuracy {0:.1f}%, mCE: {1:.1f} on the ImageNet-C".format(overall_acc, mCE * 100.))
+    return overall_acc, mCE

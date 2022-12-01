@@ -6,7 +6,10 @@ paper: https://arxiv.org/abs/2109.01903
 
 Robust fine-tuning of CLIP ViT-B/16 model on ImageNet with single 8-GPU machine:
 
-**Step1: finetuning and saving models** 
+## Examples
+
+Robust fintuning of ViT-B/16 on ImageNet with single 8-GPU machine:
+
 ```bash
 python -m torch.distributed.launch --nproc_per_node=8 examples/imageclassification/imagenet/wiseft/main.py \
 --data_dir=$ImageNetDataDir \
@@ -23,15 +26,6 @@ python -m torch.distributed.launch --nproc_per_node=8 examples/imageclassificati
 --pin-mem \
 --output=output/wiseft \
 --experiment=tmp
-```
-
-**Step2: interpolation of saved models** 
-```bash
-python interpolate.py
---model=clip_vit_base_patch16_224 \
---num-gpu=8 \
---batch-size=128 \
---load=output/wiseft/tmp/zero_shot.pt,output/wiseft/tmp/9.pt \
 ```
 
 ## Pretrained Models
