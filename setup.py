@@ -8,7 +8,7 @@ with open('requirements/build.txt') as f:
 setup(
     # Metadata
     name='easyrobust',
-    version='0.2.2',
+    version='0.2.3',
     python_requires='>=3.6',
     author='Alibaba Security',
     author_email='mxf164419@alibaba-inc.com',
