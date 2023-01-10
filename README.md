@@ -53,21 +53,14 @@ We have a series of technical articles on the functionalities of EasyRobust.
  - [NeurIPS2022 阿里提出基于离散化对抗训练的鲁棒视觉新基准](https://mp.weixin.qq.com/s?__biz=MzU1NTMyOTI4Mw==&mid=2247610520&idx=1&sn=d7ff15f6a89030a01ca03de406f2f4ec)
  
 ## Installation
-### Install by PIP
-
-clone EasyRobust repository:
-
+### Install from Source:
 ```bash
 $ git clone https://github.com/alibaba/easyrobust.git
-```
-
-setup from the source:
-```bash
 $ cd easyrobust
 $ pip install -e .
 ```
 
-or install from PyPI (not available yet):
+### Install from PyPI:
 ```bash
 $ pip install easyrobust
 ```
