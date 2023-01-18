@@ -98,10 +98,10 @@ Models trained by EasyRobust:
 If you find our work and this repository useful. Please consider giving a star ⭐ and citation. 
 
 ```
-@article{mao2022enhance,
-  title={Enhance the visual representation via discrete adversarial training},
-  author={Mao, Xiaofeng and Chen, Yuefeng and Duan, Ranjie and Zhu, Yao and Qi, Gege and Ye, Shaokai and Li, Xiaodan and Zhang, Rong and Xue, Hui},
-  journal={arXiv preprint arXiv:2209.07735},
+@inproceedings{mao2022enhance,
+  title={Enhance the Visual Representation via Discrete Adversarial Training},
+  author={Mao, Xiaofeng and Chen, YueFeng and Duan, Ranjie and Zhu, Yao and Qi, Gege and Ye, Shaokai and Li, Xiaodan and Zhang, Rong and others},
+  booktitle={Advances in Neural Information Processing Systems},
   year={2022}
 }
 ```
