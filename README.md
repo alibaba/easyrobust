@@ -10,9 +10,13 @@
 
 ## What's New
 
-- **[Sep 2022]**: [Discrete Adversairal Training](https://arxiv.org/abs/2209.07735) was accepted into NeurIPS 2022! Codes avaliable at [examples/imageclassification/imagenet/dat](examples/imageclassification/imagenet/dat/README.md)
+- **[Oct 2022]**: [Towards Understanding and Boosting Adversarial Transferability from a Distribution Perspective](https://arxiv.org/abs/2210.04213) was accepted into TIP 2022! Codes will be avaliable at [examples/attacks/dra](examples/attacks/dra)
 
-- **[Sep 2022]**: [Robust Vision Transformer](https://arxiv.org/abs/2105.07926) achieves better performance than paper report using our implementation in [examples/imageclassification/imagenet/rvt](examples/imageclassification/imagenet/rvt/README.md)
+- **[Sep 2022]**: [Boosting Out-of-distribution Detection with Typical Features](https://arxiv.org/abs/2210.04200) was accepted into NeurIPS 2022! Codes avaliable at [examples/ood_detection/BATS](examples/ood_detection/BATS)
+
+- **[Sep 2022]**: [Enhance the Visual Representation via Discrete Adversarial Training](https://arxiv.org/abs/2209.07735) was accepted into NeurIPS 2022! Codes avaliable at [examples/imageclassification/imagenet/dat](examples/imageclassification/imagenet/dat)
+
+- **[Sep 2022]**: Updating 5 methods for analysing your robust models under [tools/](tools).
 
 - **[Sep 2022]**: Updating 13 reproducing examples of robust training methods under [examples/imageclassification/imagenet](examples/imageclassification/imagenet).
 
@@ -20,7 +24,16 @@
 
 - **[Sep 2022]**: EasyRobust v0.2.0 released.
 
+## Our Research Project
+
+- **[TIP 2022]** Towards Understanding and Boosting Adversarial Transferability from a Distribution Perspective [[Paper](https://arxiv.org/abs/2210.04213), [Code](examples/attacks/dra)]
+- **[NeurIPS 2022]** Boosting Out-of-distribution Detection with Typical Features [[Paper](https://arxiv.org/abs/2210.04200), [Code](examples/ood_detection/BATS)]
+- **[NeurIPS 2022]** Enhance the Visual Representation via Discrete Adversarial Training [[Paper](https://arxiv.org/abs/2209.07735), [Code](examples/imageclassification/imagenet/dat)]
+- **[CVPR 2022]** Towards Robust Vision Transformer [[Paper](https://arxiv.org/abs/2105.07926), [Code](examples/imageclassification/imagenet/rvt)]
+
+
 ## Introduction
+
 EasyRobust is an **Easy**-to-use library for state-of-the-art **Robust** Computer Vision Research with [PyTorch](https://pytorch.org). EasyRobust aims to accelerate research cycle in robust vision, by collecting comprehensive robust training techniques and benchmarking them with various robustness metrics. The key features includes:
 
 - **Reproducible implementation of SOTA in Robust Image Classification**: Most existing SOTA in Robust Image Classification are implemented - [Adversarial Training](https://arxiv.org/abs/1706.06083), [AdvProp](https://arxiv.org/abs/1911.09665), [SIN](https://arxiv.org/abs/1811.12231), [AugMix](https://arxiv.org/abs/1912.02781), [DeepAugment](https://arxiv.org/abs/2006.16241), [DrViT](https://arxiv.org/abs/2111.10493), [RVT](https://arxiv.org/abs/2105.07926), [FAN](https://arxiv.org/abs/2204.12451), [APR](https://arxiv.org/abs/2108.08487), [HAT](https://arxiv.org/abs/2204.00993), [PRIME](https://arxiv.org/abs/2112.13547), [DAT](https://arxiv.org/abs/2209.07735) and so on.
@@ -31,24 +44,23 @@ EasyRobust is an **Easy**-to-use library for state-of-the-art **Robust** Compute
 
 - **Model Zoo**: Open source more than 30 pretrained adversarially or non-adversarially robust models. 
 
-- **Analytical tools**: Support analysis and visualization about a pretrained robust model, including [Attention Visualization of CNNs/ViTs](./tools/README.md), [Convolution Kernel Visualization](./tools/README.md), [Shape vs. Texture Biases Analysis](./tools/README.md), etc. Using these tools can help us to explain how robust training improves the interpretability of the model. 
+- **Analytical tools**: Support analysis and visualization about a pretrained robust model, including [Attention Visualization](./tools), [Decision Boundary Visualization](./tools), [Convolution Kernel Visualization](./tools), [Shape vs. Texture Biases Analysis](./tools), etc. Using these tools can help us to explain how robust training improves the interpretability of the model. 
 
+## Technical Articles
+We have a series of technical articles on the functionalities of EasyRobust.
+ - [顶刊TIP 2022！阿里提出：从分布视角出发理解和提升对抗样本的迁移性](https://mp.weixin.qq.com/s/qtTXn3B4OYiBaZgHZo9cGA)
+ - [无惧对抗和扰动、增强泛化，阿里安全打造更鲁棒的ViT模型，论文入选CVPR 2022](https://mp.weixin.qq.com/s/J6gqA09MxLwmN_C40Sjf1Q)
+ - [NeurIPS2022 阿里提出基于离散化对抗训练的鲁棒视觉新基准](https://mp.weixin.qq.com/s?__biz=MzU1NTMyOTI4Mw==&mid=2247610520&idx=1&sn=d7ff15f6a89030a01ca03de406f2f4ec)
+ 
 ## Installation
-### Install by PIP
-
-clone EasyRobust repository:
-
+### Install from Source:
 ```bash
 $ git clone https://github.com/alibaba/easyrobust.git
-```
-
-setup from the source:
-```bash
 $ cd easyrobust
 $ pip install -e .
 ```
 
-or install from PyPI (not available yet):
+### Install from PyPI:
 ```bash
 $ pip install easyrobust
 ```
@@ -122,16 +134,17 @@ Top1 Accuracy on the AutoAttack: 0.0%
 
 ### 2. How to use EasyRobust to train my own robust models?
 We implement most robust training methods in the folder `examples/imageclassification/imagenet/`. All of them are based on a basic training script: [examples/imageclassification/imagenet/base_training_script.py](./examples/imageclassification/imagenet/base_training_script.py). By comparing the difference, you can clearly see where and which hyperparameters of basic training are modified to create a robust training example. Below we present the tutorials of some classic methods:
-- [Adversarial Training on ImageNet using 8 GPUs](./examples/imageclassification/imagenet/adversarial_training/README.md)
-- [AugMix Training on ImageNet with 180 Epochs](./examples/imageclassification/imagenet/augmix/README.md)
-- [AdvProp for Improving Non-adversarial Robustness and Accuracy](./examples/imageclassification/imagenet/advprop/README.md)
-- [Using Stylized ImageNet as Extended Data for Training](./examples/imageclassification/imagenet/SIN/README.md)
-- [Discrete Adversarial Training for ViTs](./examples/imageclassification/imagenet/dat/README.md)
-- [Training Robust Vision Transformers (RVT) with 300 Epochs](./examples/imageclassification/imagenet/rvt/README.md)
+- [Adversarial Training on ImageNet using 8 GPUs](./examples/imageclassification/imagenet/adversarial_training)
+- [AugMix Training on ImageNet with 180 Epochs](./examples/imageclassification/imagenet/augmix)
+- [AdvProp for Improving Non-adversarial Robustness and Accuracy](./examples/imageclassification/imagenet/advprop)
+- [Using Stylized ImageNet as Extended Data for Training](./examples/imageclassification/imagenet/SIN)
+- [Discrete Adversarial Training for ViTs](./examples/imageclassification/imagenet/dat)
+- [Training Robust Vision Transformers (RVT) with 300 Epochs](./examples/imageclassification/imagenet/rvt)
+- [Robust Finetuning of CLIP Models](./examples/imageclassification/imagenet/wiseft)
 
 ## Analytical Tools
 
-see [tools/README.md](./tools/README.md)
+see [tools/README.md](./tools)
 
 ## Model Zoo and Baselines
 
@@ -147,7 +160,28 @@ OPTIONS:
     --data_dir [PATH of the bencmark datasets]
     --ckpt_path [URL or PATH of the model weights]
 ```
-If you are willing to submit the model to our benchmarks, you can prepare a python script similar to `benchmarks/benchmark.py` and `xxx.pth` saving weights, zip all files and send to us. We will check the result and present your result into the benchmark if there is no problem. 
+If you are willing to submit the model to our benchmarks, you can prepare a python script similar to `benchmarks/benchmark.py` and weights file `xxx.pth`, zip all the files. Then open an issue with the "Submit Model" template and provide a json storing submit information. Below is a submission template in adversarial robustness benchmark of image classification:
+
+```markdown
+## Submit Json Information
+
+{"date": "19/06/2017", 
+ "extra_data": "no", 
+ "model": "<b>Adversarial Training</b>", 
+ "institution": "MIT", 
+ "paper_link": "https://arxiv.org/abs/1706.06083", 
+ "code_link": "", 
+ "architecture": "swin-b", 
+ "training framework": "easyrobust (v1)", 
+ "ImageNet-val": 75.05, 
+ "autoattack": 47.42, 
+ "files": "<a href=http://alisec-competition.oss-cn-shanghai.aliyuncs.com/xiaofeng/imagenet_pretrained_models/advtrain_models/advtrain_swin_base_patch4_window7_224_ep4.pth >download</a>", 
+ "advrob_imgcls_leaderboard": true, 
+ "oodrob_imgcls_leaderboard": false, 
+ "advrob_objdet_leaderboard": false, 
+ "oodrob_objdet_leaderboard": false}
+```
+We will check the result and present your result into the benchmark if there is no problem. For submission template of other benchmarks, check [submit-model.md](.github/ISSUE_TEMPLATE/submit-model.md).
 
 Below is the model zoo and benchmark of the EasyRobust. All the results are runned by [benchmarks/adv_robust_bench.sh](./benchmarks/adv_robust_bench.sh) and [benchmarks/non_adv_robust_bench.sh](./benchmarks/non_adv_robust_bench.sh).
 

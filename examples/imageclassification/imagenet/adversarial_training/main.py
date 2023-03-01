@@ -13,6 +13,7 @@ Hacked together by / Copyright 2020 Ross Wightman (https://github.com/rwightman)
 import argparse
 from random import shuffle
 import time
+from tkinter.ttk import Style
 import yaml
 import os
 import logging
@@ -298,6 +299,10 @@ parser.add_argument('--torchscript', dest='torchscript', action='store_true',
 parser.add_argument('--log-wandb', action='store_true', default=False,
                     help='log training and validation metrics to wandb')
 
+# args for adversarial training
+parser.add_argument('--attack_criterion', type=str, default='regular', choices=['regular', 'smooth', 'mixup'])
+parser.add_argument('--no_standard_aug', action='store_true', default=False)
+
 class Lighting(object):
     """
     Lighting noise (see https://git.io/fhBOc)
@@ -422,7 +427,7 @@ def main():
         bn_eps=args.bn_eps,
         scriptable=args.torchscript,
         checkpoint_path=args.initial_checkpoint)
-    
+
     if args.local_rank == 0:
         _logger.info(
             f'Model {safe_model_name(args.model)} created, param count:{sum([m.numel() for m in model.parameters()])}')
@@ -531,8 +536,6 @@ def main():
     if args.local_rank == 0:
         _logger.info('Scheduled epochs: {}'.format(num_epochs))
 
-
-
     # setup mixup / cutmix
     collate_fn = None
     mixup_fn = None
@@ -557,28 +560,73 @@ def main():
     if args.resplit:
     # apply RE to second half of batch if no aug split otherwise line up with aug split
         re_num_splits = num_aug_splits or 2
+    train_transform = create_transform(
+        input_size=data_config['input_size'],
+        is_training=True,
+        use_prefetcher=False,
+        no_aug=args.no_aug,
+        scale=args.scale,
+        ratio=args.ratio,
+        hflip=args.hflip,
+        vflip=args.vflip,
+        color_jitter=args.color_jitter,
+        auto_augment=args.aa,
+        interpolation=train_interpolation,
+        mean=data_config['mean'],
+        std=data_config['std'],
+        crop_pct=None,
+        tf_preprocessing=False,
+        re_prob=args.reprob,
+        re_mode=args.remode,
+        re_count=args.recount,
+        re_num_splits=re_num_splits,
+        separate=num_aug_splits > 0,
+    )
+    val_transform = create_transform(
+        input_size=data_config['input_size'],
+        is_training=False,
+        use_prefetcher=False,
+        no_aug=False,
+        scale=None,
+        ratio=False,
+        hflip=0.5,
+        vflip=0.,
+        color_jitter=0.4,
+        auto_augment=None,
+        interpolation=data_config['interpolation'],
+        mean=data_config['mean'],
+        std=data_config['std'],
+        crop_pct=data_config['crop_pct'],
+        tf_preprocessing=False,
+        re_prob=0.,
+        re_mode='const',
+        re_count=1,
+        re_num_splits=re_num_splits,
+        separate=num_aug_splits > 0,
+    )
 
-    train_transform = transforms.Compose([
-        transforms.RandomResizedCrop(224),
-        transforms.RandomHorizontalFlip(),
-        transforms.ColorJitter(
-            brightness=0.1,
-            contrast=0.1,
-            saturation=0.1
-        ),
-        transforms.ToTensor(),
-        Lighting(0.05, torch.Tensor([0.2175, 0.0188, 0.0045]), 
-                      torch.Tensor([
-        [-0.5675,  0.7192,  0.4009],
-        [-0.5808, -0.0045, -0.8140],
-        [-0.5836, -0.6948,  0.4203],
-    ]))
-    ])
-    val_transform = transforms.Compose([
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.ToTensor()
+    if not args.no_standard_aug:
+        train_transform = transforms.Compose([
+            transforms.RandomResizedCrop(224),
+            transforms.RandomHorizontalFlip(),
+            transforms.ColorJitter(
+                brightness=0.1,
+                contrast=0.1,
+                saturation=0.1
+            ),
+            transforms.ToTensor(),
+            Lighting(0.05, torch.Tensor([0.2175, 0.0188, 0.0045]), 
+                        torch.Tensor([
+            [-0.5675,  0.7192,  0.4009],
+            [-0.5808, -0.0045, -0.8140],
+            [-0.5836, -0.6948,  0.4203],
+        ]))
         ])
+        val_transform = transforms.Compose([
+                transforms.Resize(256),
+                transforms.CenterCrop(224),
+                transforms.ToTensor()
+            ])
 
     print(train_transform)
     print(val_transform)
@@ -733,7 +781,7 @@ def train_one_epoch(
             input = input.contiguous(memory_format=torch.channels_last)
 
         with amp_autocast():
-            advinput = pgd_generator(input, target, model)
+            advinput = pgd_generator(input, target, model, attack_criterion=args.attack_criterion)
             output = model(advinput.clone().detach())
             loss = loss_fn(output, target)
 

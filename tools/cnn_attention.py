@@ -157,7 +157,7 @@ def main(args):
         grayscale_cam = grayscale_cam[0, :]
 
         cam_image = show_cam_on_image(np_img, grayscale_cam, use_rgb=True)
-        Image.fromarray(cam_image).save('cnn_attn.jpg')
+        Image.fromarray(cam_image).save('images/cnn_attn.jpg')
 
     
 if __name__ == "__main__":

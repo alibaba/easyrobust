@@ -30,7 +30,7 @@ def visTensor(tensor, kernel_num=64, nrow=8, padding=1):
         tensor = dd.transpose(0,1).reshape(kernel_num,3,w,h)
 
     grid = utils.make_grid(tensor, nrow=nrow, normalize=True, padding=padding).numpy().transpose((1, 2, 0))
-    Image.fromarray((grid*255.).astype('uint8')).save('vis_filters.png')
+    Image.fromarray((grid*255.).astype('uint8')).save('images/vis_filters.png')
     
 if __name__ == "__main__":
     

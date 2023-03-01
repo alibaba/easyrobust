@@ -3,5 +3,7 @@ torch>=1.8.0
 torchvision>=0.9.0
 tqdm
 opt_einsum
-timm==0.4.12
+timm==0.5.4
 einops
+ftfy
+regex
