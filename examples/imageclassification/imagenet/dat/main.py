@@ -39,6 +39,7 @@ from timm.data.distributed_sampler import OrderedDistributedSampler
 from easyrobust.datasets import ImageNetDataset
 from easyrobust.third_party.vqgan import VQModel, reconstruct_with_vqgan
 from easyrobust.attacks import pgd_generator
+import easyrobust.models
 
 try:
     from apex import amp
