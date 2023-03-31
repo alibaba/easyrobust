@@ -1,0 +1,19 @@
+python train.py \
+--name celeba_styleD \
+--img_file /dataset/image_painting/image_list/celeba_HQ_train.txt \
+--mask_file /dataset/image_painting/image_list/irregular_mask_train.txt \
+--model tc \
+--coarse_or_refine coarse \
+--netT original \
+--n_encoders 12 \
+--n_decoders 0 \
+--netD style \
+--gpu_ids 2,1,0 \
+--load_size 542 \
+--fine_size 512 \
+--batch_size 24 \
+--display_port 8093 \
+--attn_G \
+--add_noise \
+--display_ncols 0 \
+--continue_train

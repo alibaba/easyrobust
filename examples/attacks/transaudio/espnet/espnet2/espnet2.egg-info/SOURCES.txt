@@ -1,0 +1,7 @@
+setup.py
+espnet2.egg-info/PKG-INFO
+espnet2.egg-info/SOURCES.txt
+espnet2.egg-info/dependency_links.txt
+espnet2.egg-info/entry_points.txt
+espnet2.egg-info/requires.txt
+espnet2.egg-info/top_level.txt

@@ -1,0 +1,15 @@
+python test.py \
+--name celeba \
+--img_file ./examples/imagenet/img/ \
+--mask_file ./examples/imagenet/mask/ \
+--results_dir ./results \
+--model tc \
+--coarse_or_refine refine \
+--gpu_id 0 \
+--no_shuffle \
+--batch_size 1 \
+--preprocess scale_shortside \
+--mask_type 3 \
+--load_size 512 \
+--attn_G \
+--add_noise

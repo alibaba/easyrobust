@@ -1,0 +1,20 @@
+name: TFill
+channels:
+  - pytorch
+  - defaults
+dependencies:
+  - python=3.9.7
+  - pip=21.2.4
+  - cudatoolkit=10.2
+  - pytorch=1.10.0
+  - torchvision=0.11.1
+  - numpy=1.21.2
+  - pip:
+      - dominate==2.6.0
+      - visdom==0.1.8.9
+      - imageio==2.11.1
+      - einops==0.3.2
+      - PyQt5==5.13.2
+      - opencv-python==4.5.4.58
+      - scikit-image==0.18.3
+      - ninja==1.10.2.3

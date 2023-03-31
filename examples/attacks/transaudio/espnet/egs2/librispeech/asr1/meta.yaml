@@ -1,0 +1,10 @@
+espnet: 0.9.7
+files:
+  asr_model_file: exp/asr_train_asr_conformer5_raw_bpe5000_frontend_confn_fft400_frontend_confhop_length160_scheduler_confwarmup_steps25000_batch_bins140000000_optim_conflr0.0015_initnone_sp/valid.acc.ave_10best.pth
+  lm_file: exp/lm_train_lm_transformer2_bpe5000_scheduler_confwarmup_steps25000_batch_bins500000000_accum_grad2_use_amptrue/valid.loss.ave_10best.pth
+python: "3.8.5 (default, Sep  4 2020, 07:30:14) \n[GCC 7.3.0]"
+timestamp: 1613472609.876032
+torch: 1.7.1
+yaml_files:
+  asr_train_config: exp/asr_train_asr_conformer5_raw_bpe5000_frontend_confn_fft400_frontend_confhop_length160_scheduler_confwarmup_steps25000_batch_bins140000000_optim_conflr0.0015_initnone_sp/config.yaml
+  lm_train_config: exp/lm_train_lm_transformer2_bpe5000_scheduler_confwarmup_steps25000_batch_bins500000000_accum_grad2_use_amptrue/config.yaml

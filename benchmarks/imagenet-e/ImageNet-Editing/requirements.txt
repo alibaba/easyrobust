@@ -1,0 +1,17 @@
+numpy
+Pillow
+opencv-python
+torch
+imageio
+torchvision
+einops
+scikit-image
+kornia
+dominate
+lpips
+Ninja
+ftfy
+regex
+matplotlib
+imutils
+gradio

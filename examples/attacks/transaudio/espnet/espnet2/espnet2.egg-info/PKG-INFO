@@ -1,0 +1,10 @@
+Metadata-Version: 2.1
+Name: espnet2
+Version: 0.1.7
+Summary: ESPnet Model Zoo
+Home-page: UNKNOWN
+License: Apache Software License
+Platform: UNKNOWN
+
+a python command tool for camel case
+

@@ -1,0 +1,3 @@
+[console_scripts]
+espnet2.bin.asr_inference = espnet2.bin.asr_inference:main
+

@@ -9,9 +9,9 @@
 </div>
 
 ## What's New
-- **[Feb 2023]** [ImageNet-E: Benchmarking Neural Network Robustness against Attribute Editing]() was accepted by CVPR 2023! Codes will be avaliable at [benchmarks/imagenet-e](benchmarks/imagenet-e) 
+- **[Feb 2023]** [ImageNet-E: Benchmarking Neural Network Robustness against Attribute Editing](https://openreview.net/forum?id=C1A2HD6EEGO) was accepted by CVPR 2023! Codes will be avaliable at [benchmarks/imagenet-e](benchmarks/imagenet-e) 
 
-- **[Feb 2023]** [TransAudio: Towards the Transferable Adversarial Audio Attack via Learning Contextualized Perturbations]() was accepted by ICASSP 2023! Codes will be avaliable at [examples/attacks/transaudio](examples/attacks/transaudio) 
+- **[Feb 2023]** [TransAudio: Towards the Transferable Adversarial Audio Attack via Learning Contextualized Perturbations](https://arxiv.org/abs/2303.15940) was accepted by ICASSP 2023! Codes will be avaliable at [examples/attacks/transaudio](examples/attacks/transaudio) 
 
 - **[Jan 2023]** [Inequality phenomenon in $l_\infty$-adversarial training, and its unrealized threats](https://openreview.net/pdf?id=4t9q35BxGr) was accepted by ICLR 2023 as **notable-top-25%**! Codes will be avaliable at [examples/attacks/inequality](examples/attacks/inequality)
 
@@ -31,6 +31,9 @@
 
 ## Our Research Project
 
+- **[CVPR 2023]** ImageNet-E: Benchmarking Neural Network Robustness via Attribute Editing [[Paper](https://arxiv.org/abs/2210.04213), [Image editing toolkit](ImageNet-Editing), [ImageNet-E dataset](https://drive.google.com/file/d/19M1FQB8c_Mir6ermRsukTQReI-IFXeT0/view?usp=sharing)]
+- **[ICLR 2023]** Inequality phenomenon in $l_\infty$-adversarial training, and its unrealized threats [[Paper](https://openreview.net/pdf?id=4t9q35BxGr), [Code](examples/attacks/inequality)]
+- **[ICASSP 2023]** TransAudio: Towards the Transferable Adversarial Audio Attack via Learning Contextualized Perturbations [[Paper](https://arxiv.org/abs/2303.15940), [Code](examples/attacks/transaudio)]
 - **[TIP 2022]** Towards Understanding and Boosting Adversarial Transferability from a Distribution Perspective [[Paper](https://arxiv.org/abs/2210.04213), [Code](examples/attacks/dra)]
 - **[NeurIPS 2022]** Boosting Out-of-distribution Detection with Typical Features [[Paper](https://arxiv.org/abs/2210.04200), [Code](examples/ood_detection/BATS)]
 - **[NeurIPS 2022]** Enhance the Visual Representation via Discrete Adversarial Training [[Paper](https://arxiv.org/abs/2209.07735), [Code](examples/imageclassification/imagenet/dat)]
