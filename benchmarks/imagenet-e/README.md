@@ -2,7 +2,7 @@
 
 The code and dataset will be released here.
 
-- **[CVPR 2023]** ImageNet-E: Benchmarking Neural Network Robustness via Attribute Editing [[Paper](https://openreview.net/forum?id=C1A2HD6EEGO), [Image editing toolkit](ImageNet-Editing), [ImageNet-E dataset](https://drive.google.com/file/d/19M1FQB8c_Mir6ermRsukTQReI-IFXeT0/view?usp=sharing)]
+- **[CVPR 2023]** ImageNet-E: Benchmarking Neural Network Robustness via Attribute Editing [[Paper](https://arxiv.org/abs/2303.17096), [Image editing toolkit](ImageNet-Editing), [ImageNet-E dataset](https://drive.google.com/file/d/19M1FQB8c_Mir6ermRsukTQReI-IFXeT0/view?usp=sharing)]
 
 
 
