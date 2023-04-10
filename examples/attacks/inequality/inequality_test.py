@@ -48,13 +48,14 @@ def get_pred_index(model, test_input):
     return index
 
 def get_average_saliency_map(img_grad_np, gap  = 10):
-    w,h,c = img_grad_np.shape
+    c,w,h = img_grad_np.shape
+    # print(img_grad_np.shape)
     target = int(w//gap)
     for i in range(target):
         for j in range(target):
-            right_w = min(img_grad_np.shape[0], (i+1)*gap)
-            right_h = min(img_grad_np.shape[1], (j+1)*gap)
-            img_grad_np[i*gap:right_w, j*gap:right_h, :] = img_grad_np[i*gap:right_w, j*gap:right_h, :].sum()
+            right_w = min(img_grad_np.shape[1], (i+1)*gap)
+            right_h = min(img_grad_np.shape[2], (j+1)*gap)
+            img_grad_np[:, i*gap:right_w, j*gap:right_h] = img_grad_np[:, i*gap:right_w, j*gap:right_h].sum()
     # img_grad_np =  (img_grad_np - np.min(img_grad_np))/(np.max(img_grad_np) - np.min(img_grad_np))     
     return img_grad_np
 
@@ -104,11 +105,13 @@ if __name__ == "__main__":
 
             natural_img_gradshap = get_gradshap(natural_model, test_input, test_target)
             natural_gs_np = natural_img_gradshap.cpu().detach().numpy()[0]
-            natural_gini =  Gini_index.gini(abs(np.sort(natural_gs_np.flatten())[::-1]))
+            natural_gs_np = (natural_gs_np>0)*natural_gs_np
+            
+            natural_gini =  Gini_index.gini((np.sort(natural_gs_np.flatten()[::-1])))
             natural_gini_list.append(natural_gini)
 
             natural_average_attr_t = get_average_saliency_map(natural_gs_np,gap  = 16)
-            natural_average_attr_t = (natural_average_attr_t > 0) * natural_average_attr_t
+            # natural_average_attr_t = (natural_average_attr_t > 0) * natural_average_attr_t
             natural_gs_np_flatten = np.sort(natural_average_attr_t.flatten())[::-1]
 
             r_natural_gini = Gini_index.gini(natural_gs_np_flatten)
@@ -117,19 +120,20 @@ if __name__ == "__main__":
 
             adv_img_gradshap = get_gradshap(adv_model, test_input, test_target)
             adv_gs_np = adv_img_gradshap.cpu().detach().numpy()[0]
-            adv_gini =  Gini_index.gini(abs(np.sort(adv_gs_np.flatten())[::-1]))
+            adv_gs_np = (adv_gs_np>0)*adv_gs_np                                
+            adv_gini =  Gini_index.gini(np.sort(adv_gs_np.flatten())[::-1])
             adv_gini_list.append(adv_gini)
 
             # adv_average_attr_t = (adv_average_attr_t > 0) * adv_average_attr_t
-            adv_average_attr_t = (adv_gs_np>0)*adv_gs_np
-            adv_average_attr_t = get_average_saliency_map(adv_average_attr_t,gap  = 8)
+            # adv_average_attr_t = (adv_gs_np>0)*adv_gs_np
+            adv_average_attr_t = get_average_saliency_map(adv_gs_np,gap  = 16)
             adv_gs_np_flatten = np.sort(adv_average_attr_t.flatten())[::-1]
 
             r_adv_gini = Gini_index.gini(adv_gs_np_flatten)
             regional_adv_gini_list.append(r_adv_gini)
             
             
-            if cur_cnt%50 ==0:
+            if cur_cnt%10 ==0:
                 print(cur_cnt)
                 print("*********Std. Trained***********","Global Gini: ", np.mean(natural_gini_list), "Regional Gini: ", np.mean(regional_natural_gini_list))
 
