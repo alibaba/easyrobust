@@ -2,15 +2,15 @@
 
 
 ![Benchmark Results](teaser.png)
-This repository contains the data and guidelines of COCO-O dataset, which is proposed in our paper "COCO-O: A Benchmark for Object Detectors under Natural Distribution Shifts", 
+This repository contains the data and guidelines of COCO-O dataset, which is proposed in our ICCV2023 paper "COCO-O: A Benchmark for Object Detectors under Natural Distribution Shifts".
 
-Paper: 
+Paper: https://arxiv.org/abs/2307.12730
 
 ## COCO-O
 
 COCO-O(ut-of-distribution) contains 6 domains (sketch, cartoon, painting, weather, handmake, tattoo) of COCO objects which are hard to be detected by most existing detectors. The dataset has a total of 6,782 images and 26,624 labelled bounding boxes.
 
-If you want to use our COCO-O, please [download dataset from here](https://drive.google.com/file/d/1aBfIJN0zo_i80Hv4p7Ch7M8pRzO37qbq/view?usp=drive_link) and then unzip the `ood_coco.zip` into `/path/to/ood_coco`
+If you want to use our COCO-O, first [download dataset from here](https://drive.google.com/file/d/1aBfIJN0zo_i80Hv4p7Ch7M8pRzO37qbq/view?usp=drive_link) and then unzip the `ood_coco.zip` into `/path/to/ood_coco`
 
 After that, you can follow the section of [Benchmarking Detectors](#benchmarking-detectors) to evaluate on coco-o.
 
