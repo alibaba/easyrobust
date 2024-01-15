@@ -1,0 +1,53 @@
+---
+wandb_target_run: model_inversion_targets_facescrub/XXXXXXXXX
+wandb_evaluation_run: model_inversion_evaluation/XXXXXXXXX
+stylegan_model: stylegan2-ada-pytorch/ffhq.pkl
+seed: 42
+dataset: facescrub
+
+candidates:
+  num_candidates: 200
+  candidate_search:
+    search_space_size: 2000
+    center_crop: 800
+    resize: 224
+    horizontal_flip: true
+    batch_size: 25
+    truncation_psi: 0.5
+    truncation_cutoff: 8
+
+attack:
+  batch_size: 25
+  num_epochs: 50
+  targets: all
+  discriminator_loss_weight: 0.0
+  single_w: true
+  clip: false
+  transformations:
+    CenterCrop:
+      size: 800
+    Resize:
+      size: 224
+    RandomResizedCrop:
+      size: [224, 224]
+      scale: [0.9, 1.0]
+      ratio: [1.0, 1.0]
+
+  optimizer:
+    Adam:
+      lr: 0.005
+      weight_decay: 0
+      betas: [0.1, 0.1]
+
+final_selection:
+  samples_per_target: 50
+  approach: transforms
+  iterations: 100
+
+
+wandb:
+  enable_logging: true
+  wandb_init_args:
+    project: model_inversion_attacks
+    save_code: true
+    name: Attack_FaceScrub_FFHQ

@@ -1,0 +1,53 @@
+---
+wandb_target_run: model_inversion_targets_celeba/bwamom5k
+wandb_evaluation_run: model_inversion_evaluation/3v7304jz
+stylegan_model: stylegan2-ada-pytorch/metfaces.pkl
+seed: 42
+dataset: celeba_identities
+
+candidates:
+  num_candidates: 200
+  candidate_search:
+    search_space_size: 5000
+    center_crop: 800
+    resize: 224
+    horizontal_flip: true
+    batch_size: 4
+    truncation_psi: 0.5
+    truncation_cutoff: 8
+
+attack:
+  batch_size: 4
+  num_epochs: 70
+  targets: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49]
+  discriminator_loss_weight: 0.0
+  single_w: true
+  clip: false
+  transformations:
+    CenterCrop:
+      size: 800
+    Resize:
+      size: 224
+    RandomResizedCrop:
+      size: [224, 224]
+      scale: [0.9, 1.0]
+      ratio: [1.0, 1.0]
+
+  optimizer:
+    Adam:
+      lr: 0.005
+      weight_decay: 0
+      betas: [0.1, 0.1]
+
+final_selection:
+  samples_per_target: 50
+  approach: transforms 
+  iterations: 100
+
+
+wandb:
+  enable_logging: true
+  wandb_init_args:
+    project: model_inversion_attacks
+    save_code: true
+    name: Attack_CelebA_MetFaces

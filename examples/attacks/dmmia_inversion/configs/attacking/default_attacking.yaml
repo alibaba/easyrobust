@@ -1,0 +1,58 @@
+---
+wandb_target_run: model_inversion_targets_facescrub/XXXXXXXXX # WandB training run for target model.
+wandb_evaluation_run: model_inversion_evaluation/XXXXXXXXX # WandB training run for evaluation model.
+stylegan_model: stylegan2-ada-pytorch/ffhq.pkl # Path to StyleGAN2 weight.
+seed: 42 # Seed used for splitting the datasets and initialize the attack.
+dataset: facescrub # Target dataset, select one of [facescrub, celeba_identities, stanford_dogs_cropped, stanford_dogs_uncropped].
+
+candidates:
+  num_candidates: 200 # Number of latent vectors to optimize for each target.
+  candidate_search:
+    search_space_size: 2000 # Set of randomly sampled latent vector, from which the candidates are selected.
+    center_crop: 800 # Crop generated images.
+    resize: 224 # Resize generated images (after cropping).
+    horizontal_flip: true # Flip the generated images horizontally in 50% of the cases.
+    batch_size: 25 # Batch size during the sampling process (single GPU).
+    truncation_psi: 0.5 # Truncation psi for StyleGAN.
+    truncation_cutoff: 8 # Truncation cutoff for StyleGAN.
+
+attack:
+  batch_size: 25 # Batch size per GPU.
+  num_epochs: 50 # Number of optimization iterations per batch.
+  targets: 0 # Specify the targeted classes, either a single class index, a list of indices, or all.
+  discriminator_loss_weight: 0.0 # Add discriminator weight.
+  single_w: true # Optimize a single 512-vector. Otherwise, a distinct vector for each AdaIn operation is optimized.
+  clip: false # Clip generated images in range [-1, 1].
+  transformations: # Transformations applied during the optimization.
+    CenterCrop:
+      size: 800
+    Resize:
+      size: 224
+    RandomResizedCrop:
+      size: [224, 224]
+      scale: [0.9, 1.0]
+      ratio: [1.0, 1.0]
+
+  optimizer: # Optimizer used for optimization. All optimizers from torch.optim are possible.
+    Adam:
+      lr: 0.005
+      weight_decay: 0
+      betas: [0.1, 0.1]
+
+  lr_scheduler: # Option to provide a learning rate scheduler from torch.optim.
+    MultiStepLR:
+      milestones: [30, 40]
+      gamma: 0.1
+
+final_selection:
+  samples_per_target: 50 # Number of samples to select from the set of optimized latent vectors.
+  approach: transforms # Currently only transforms is available as an option.
+  iterations: 100 # Number of iterations random transformations are applied.
+
+
+wandb: # Options for WandB logging.
+  enable_logging: true # Activate logging.
+  wandb_init_args: # WandB init arguments.
+    project: model_inversion_attacks
+    save_code: true
+    name: resnest101_facescrub
