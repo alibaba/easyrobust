@@ -9,6 +9,8 @@
 </div>
 
 ## What's New
+- **[Apr 2024]** [Revisiting and Exploring Efficient Fast Adversarial Training via LAW: Lipschitz Regularization and Auto Weight Averaging](https://arxiv.org/abs/2308.11443) was accepted by T-IFS 2024! Codes will be avaliable at [examples/imageclassification/cifar10/adversarial_training/fgsm_law](examples/imageclassification/cifar10/adversarial_training/fgsm_law)
+
 - **[Jul 2023]** [COCO-O: A Benchmark for Object Detectors under Natural Distribution Shifts](https://arxiv.org/abs/2307.12730) was accepted by ICCV 2023! Dataset will be avaliable at [benchmarks/coco_o](benchmarks/coco_o)
 
 - **[Jul 2023]** [Robust Automatic Speech Recognition via WavAugment Guided Phoneme Adversarial Training](https://arxiv.org/abs/2307.12498) was accepted by INTERSPEECH 2023! Codes will be avaliable at [examples/asr/WAPAT](examples/asr/WAPAT)
@@ -35,6 +37,7 @@
 
 ## Our Research Project
 
+- **[T-IFS 2024]** Revisiting and Exploring Efficient Fast Adversarial Training via LAW: Lipschitz Regularization and Auto Weight Averaging [[Paper](https://arxiv.org/abs/2308.11443), [Code](examples/imageclassification/cifar10/adversarial_training/fgsm_law)]
 - **[ICCV 2023]** COCO-O: A Benchmark for Object Detectors under Natural Distribution Shifts [[Paper](https://arxiv.org/abs/2307.12730), [COCO-O dataset](benchmarks/coco_o)]
 - **[INTERSPEECH 2023]** Robust Automatic Speech Recognition via WavAugment Guided Phoneme Adversarial Training [[Paper](https://arxiv.org/abs/2307.12498), [Code](examples/asr/WAPAT)]
 - **[CVPR 2023]** ImageNet-E: Benchmarking Neural Network Robustness via Attribute Editing [[Paper](https://arxiv.org/abs/2303.17096), [Image editing toolkit](benchmarks/imagenet-e/ImageNet-Editing), [ImageNet-E dataset](https://drive.google.com/file/d/19M1FQB8c_Mir6ermRsukTQReI-IFXeT0/view?usp=sharing)]
